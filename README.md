@@ -67,22 +67,6 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 - Trigger: `git push` to `main` touching `src/**`
 - Uploads: COBOL → Z77140.CBL, JCL → Z77140.JCL, REXX → Z77140.REXX
 
-## Quick Start
-
-```bash
-# Clone
-git clone https://github.com/YOUR_USERNAME/zowe-cobol-insurance-claims-cicd.git
-cd zowe-cobol-insurance-claims-cicd
-
-# Deploy to z/OS (requires Zowe CLI + GitHub Actions)
-# Push to main triggers workflow
-
-# Manual deploy via Zowe CLI
-zowe zos-files upload dir-to-pds src/cobol Z77140.CBL
-zowe zos-files upload dir-to-pds src/jcl Z77140.JCL
-zowe zos-files upload dir-to-pds src/rexx Z77140.REXX
-zowe jobs submit data-set "Z77140.JCL(CLMSCMP)" --wait-for-output
-```
 
 ## Project Structure
 
