@@ -29,9 +29,7 @@
       *===============================================================
        DATA DIVISION.
        FILE SECTION.
-       FD  CLAIM-IN
-           RECORDING MODE F
-           BLOCK CONTAINS 0 RECORDS.
+       FD  CLAIM-IN.
            COPY CLAIMREC.
 
        FD  VALID-OUT
