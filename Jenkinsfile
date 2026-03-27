@@ -72,7 +72,7 @@ pipeline {
                     ).trim()
                     echo "Compile Return Code: ${retcode}"
                     if (retcode != 'CC 0000' && retcode != 'CC 0004') {
-                        sh "zowe jobs view spool-files-by-jobid ${env.COMPILE_JOBID}"
+                        sh "zowe jobs view all-spool-content ${env.COMPILE_JOBID}"
                         error("Compile FAILED with ${retcode}")
                     }
                 }
