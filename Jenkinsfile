@@ -20,33 +20,45 @@ pipeline {
             }
         }
 
-        stage('Upload Source') {
-            parallel {
-                stage('Upload COBOL') {
-                    steps {
-                        sh "zowe zos-files upload dir-to-pds src/cobol ${HLQ}.CBL"
-                    }
-                }
-                stage('Upload Copybooks') {
-                    steps {
-                        sh "zowe zos-files upload dir-to-pds src/copybook ${HLQ}.COPYBOOK"
-                    }
-                }
-                stage('Upload JCL') {
-                    steps {
-                        sh "zowe zos-files upload dir-to-pds src/jcl ${HLQ}.JCL"
-                    }
-                }
-                stage('Upload REXX') {
-                    steps {
-                        sh "zowe zos-files upload dir-to-pds src/rexx ${HLQ}.REXX"
-                    }
-                }
-                stage('Upload DB2 DDL') {
-                    steps {
-                        sh "zowe zos-files upload dir-to-pds src/db2 ${HLQ}.SQL"
-                    }
-                }
+        stage('Create Datasets') {
+            steps {
+                sh """
+                    zowe zos-files create data-set-partitioned "${HLQ}.CBL" --record-format FB --record-length 80 --block-size 27920 || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.COPYBOOK" --record-format FB --record-length 80 --block-size 27920 || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.JCL" --record-format FB --record-length 80 --block-size 27920 || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.REXX" --record-format FB --record-length 80 --block-size 27920 || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.SQL" --record-format FB --record-length 80 --block-size 27920 || true
+                """
+            }
+        }
+
+        stage('Upload COBOL') {
+            steps {
+                sh "zowe zos-files upload dir-to-pds src/cobol ${HLQ}.CBL"
+            }
+        }
+
+        stage('Upload Copybooks') {
+            steps {
+                sh "zowe zos-files upload dir-to-pds src/copybook ${HLQ}.COPYBOOK"
+            }
+        }
+
+        stage('Upload JCL') {
+            steps {
+                sh "zowe zos-files upload dir-to-pds src/jcl ${HLQ}.JCL"
+            }
+        }
+
+        stage('Upload REXX') {
+            steps {
+                sh "zowe zos-files upload dir-to-pds src/rexx ${HLQ}.REXX"
+            }
+        }
+
+        stage('Upload DB2 DDL') {
+            steps {
+                sh "zowe zos-files upload dir-to-pds src/db2 ${HLQ}.SQL"
             }
         }
 
