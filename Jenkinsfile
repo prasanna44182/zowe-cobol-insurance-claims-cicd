@@ -23,11 +23,9 @@ pipeline {
         stage('Create Datasets') {
             steps {
                 sh """
-                    zowe zos-files create data-set-partitioned "${HLQ}.CBL" --record-format FB --record-length 80 --block-size 27920 || true
-                    zowe zos-files create data-set-partitioned "${HLQ}.COPYBOOK" --record-format FB --record-length 80 --block-size 27920 || true
-                    zowe zos-files create data-set-partitioned "${HLQ}.JCL" --record-format FB --record-length 80 --block-size 27920 || true
-                    zowe zos-files create data-set-partitioned "${HLQ}.REXX" --record-format FB --record-length 80 --block-size 27920 || true
-                    zowe zos-files create data-set-partitioned "${HLQ}.SQL" --record-format FB --record-length 80 --block-size 27920 || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.COPYBOOK" --like "${HLQ}.CBL" || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.REXX" --like "${HLQ}.CBL" || true
+                    zowe zos-files create data-set-partitioned "${HLQ}.SQL" --like "${HLQ}.CBL" || true
                 """
             }
         }
