@@ -97,7 +97,20 @@ All programs follow z/OS return code conventions:
 
 ## CI/CD
 
-- GitHub Actions workflow on `src/**` push to `main`
+### Jenkins (Primary)
+
+- **Jenkinsfile** — Declarative pipeline using Zowe CLI
+- **Stages:**
+  1. Checkout — pulls source from GitHub
+  2. Upload Source — parallel upload of COBOL, Copybooks, JCL, REXX, DB2 DDL to z/OS PDSes
+  3. Compile — submits `Z77140.JCL(CLMSCMP)` via `zowe jobs submit data-set`
+  4. Verify Compile — checks return code (CC 0000 or CC 0004 = pass)
+- **Jenkins URL:** `http://localhost:8080`
+- **Job:** `insurance-claims-pipeline`
+- **Credentials:** z/OS username/password stored in Jenkins credential store (ID: `zos-credentials`)
+
+### GitHub Actions (Backup)
+
+- Workflow on `src/**` push to `main`
 - Zowe CLI uploads COBOL, copybooks, JCL, REXX, DB2 DDL to z/OS PDSes
 - Compile job CLMSCMP verifies CC 0000 or CC 0004
-- Jenkinsfile available as IBM DBB enterprise reference

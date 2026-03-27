@@ -1,65 +1,94 @@
-// =================================================================
-// IBM DBB + Jenkins Enterprise Pipeline Reference
-// Pattern used at JPMorgan, Mastercard, US Bank
-// =================================================================
-// This Jenkinsfile documents the enterprise zAppBuild pipeline.
-// GitHub Actions (mainframe-cicd.yml) is the active CI for this repo.
-// =================================================================
-
 pipeline {
     agent any
+
     environment {
-        DBB_HLQ = 'Z77140'
-        ZOSMF_PROFILE = 'zosmf'
+        HLQ = 'Z77140'
+        ZOWE_PROFILE = 'zosmf'
+        PATH = "/usr/local/bin:/opt/homebrew/bin:${env.PATH}"
     }
+
+    options {
+        timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+        timeout(time: 15, unit: 'MINUTES')
+    }
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage('DBB Build') {
-            steps {
-                sh '''
-                    groovyz ${DBB_HOME}/build.groovy \
-                        --workspace ${WORKSPACE} \
-                        --hlq ${DBB_HLQ} \
-                        --application zowe-cobol-insurance-claims-cicd
-                '''
-            }
-        }
-        stage('Compile COBOL') {
-            steps {
-                sh 'dbb build --files "src/cobol/**/*.cbl"'
-            }
-        }
-        stage('Deploy to z/OS') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'zosmf',
-                    usernameVariable: 'ZOSMF_USER',
-                    passwordVariable: 'ZOSMF_PASS'
-                )]) {
-                    sh '''
-                        zowe zos-files upload dir-to-pds src/cobol ${DBB_HLQ}.CBL
-                        zowe zos-files upload dir-to-pds src/jcl ${DBB_HLQ}.JCL
-                    '''
+
+        stage('Upload Source') {
+            parallel {
+                stage('Upload COBOL') {
+                    steps {
+                        sh "zowe zos-files upload dir-to-pds src/cobol ${HLQ}.CBL"
+                    }
+                }
+                stage('Upload Copybooks') {
+                    steps {
+                        sh "zowe zos-files upload dir-to-pds src/copybook ${HLQ}.COPYBOOK"
+                    }
+                }
+                stage('Upload JCL') {
+                    steps {
+                        sh "zowe zos-files upload dir-to-pds src/jcl ${HLQ}.JCL"
+                    }
+                }
+                stage('Upload REXX') {
+                    steps {
+                        sh "zowe zos-files upload dir-to-pds src/rexx ${HLQ}.REXX"
+                    }
+                }
+                stage('Upload DB2 DDL') {
+                    steps {
+                        sh "zowe zos-files upload dir-to-pds src/db2 ${HLQ}.SQL"
+                    }
                 }
             }
         }
-        stage('Submit Build Job') {
+
+        stage('Compile') {
             steps {
-                sh 'zowe jobs submit jcl "Z77140.JCL(CLMSCMP)" --wait'
+                script {
+                    def output = sh(
+                        script: "zowe jobs submit data-set \"${HLQ}.JCL(CLMSCMP)\" --wait-for-output --rff jobid --rft string",
+                        returnStdout: true
+                    ).trim()
+                    env.COMPILE_JOBID = output
+                    echo "Compile Job ID: ${env.COMPILE_JOBID}"
+                }
             }
         }
-        stage('Verify') {
+
+        stage('Verify Compile') {
             steps {
-                sh 'zowe jobs list spool-files-by-jobid $(zowe jobs list jobs --prefix Z77140 -o json | jq -r ".[0].jobid")'
+                script {
+                    def retcode = sh(
+                        script: "zowe jobs view job-status-by-jobid ${env.COMPILE_JOBID} --rff retcode --rft string",
+                        returnStdout: true
+                    ).trim()
+                    echo "Compile Return Code: ${retcode}"
+                    if (retcode != 'CC 0000' && retcode != 'CC 0004') {
+                        sh "zowe jobs view spool-files-by-jobid ${env.COMPILE_JOBID}"
+                        error("Compile FAILED with ${retcode}")
+                    }
+                }
             }
         }
     }
+
     post {
-        success { echo 'Pipeline SUCCESS — CC 0000' }
-        failure { echo 'Pipeline FAILED — check JES spool' }
+        success {
+            echo "Pipeline SUCCESS - all programs compiled on z/OS"
+        }
+        failure {
+            echo "Pipeline FAILED - check JES spool output"
+        }
+        always {
+            echo "HLQ: ${HLQ} | Job: ${env.COMPILE_JOBID ?: 'N/A'}"
+        }
     }
 }

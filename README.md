@@ -9,7 +9,7 @@
 
 ## Overview
 
-Batch system that validates insurance claims from VSAM, loads to DB2, generates reports, and alerts on high-value claims. Follows IBM DBB + zAppBuild enterprise patterns.
+Batch system that validates insurance claims from VSAM, loads to DB2, generates reports, and alerts on high-value claims. CI/CD powered by Jenkins + Zowe CLI.
 
 ## Pipeline
 
@@ -57,16 +57,32 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 - **JCL** — Master job (CLMSJOB), compile job (CLMSCMP), DB2 compile PROC
 - **VSAM** — KSDS input with 100-byte records
 - **Zowe CLI** — Mainframe integration for CI/CD
-- **GitHub Actions** — Automated deploy on push to main
-- **IBM DBB** — Enterprise reference pipeline (Jenkinsfile)
+- **Jenkins** — Primary CI/CD pipeline (Jenkinsfile)
+- **GitHub Actions** — Backup CI/CD workflow
 
 ## CI/CD
 
-- **GitHub Actions** + Zowe CLI deploys to z/OS on push
-- Self-hosted runner on Mac (Zowe CLI configured)
-- Trigger: `git push` to `main` touching `src/**`
-- Uploads: COBOL → Z77140.CBL, JCL → Z77140.JCL, REXX → Z77140.REXX
+- **Jenkins** (primary) — Zowe CLI pipeline at `http://localhost:8080`
+  - Stages: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → Compile → Verify
+  - Parallel uploads to z/OS PDSes via Zowe CLI
+  - Submits `CLMSCMP` compile job and verifies RC 0000/0004
+- **GitHub Actions** (backup) — workflow on `src/**` push to `main`
+- z/OS credentials stored in Jenkins credentials store
 
+## Quick Start
+
+```bash
+# Clone
+git clone https://github.com/prasanna44182/zowe-cobol-insurance-claims-cicd.git
+cd zowe-cobol-insurance-claims-cicd
+
+# Deploy via Jenkins (primary) — trigger build at localhost:8080
+# Or deploy manually via Zowe CLI
+zowe zos-files upload dir-to-pds src/cobol Z77140.CBL
+zowe zos-files upload dir-to-pds src/jcl Z77140.JCL
+zowe zos-files upload dir-to-pds src/rexx Z77140.REXX
+zowe jobs submit data-set "Z77140.JCL(CLMSCMP)" --wait-for-output
+```
 
 ## Project Structure
 
@@ -80,8 +96,8 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 │   └── data/           Sample 100-record claims data + VSAM setup JCL
 ├── application-conf/   IBM DBB zAppBuild configuration
 ├── docs/               Architecture documentation
-├── .github/workflows/  CI/CD pipeline (uploads all source + copybooks)
-├── Jenkinsfile         Enterprise DBB reference pipeline
+├── Jenkinsfile         Jenkins CI/CD pipeline (Zowe CLI)
+├── .github/workflows/  Backup GitHub Actions workflow
 └── README.md
 ```
 
