@@ -20,16 +20,6 @@ pipeline {
             }
         }
 
-        stage('Create Datasets') {
-            steps {
-                sh """
-                    zowe zos-files create data-set-partitioned "${HLQ}.COPYBOOK" --volume-serial ZXPM05 --data-set-type LIBRARY --record-format FB --record-length 80 --block-size 6160 || true
-                    zowe zos-files create data-set-partitioned "${HLQ}.REXX" --volume-serial ZXPM05 --data-set-type LIBRARY --record-format FB --record-length 80 --block-size 6160 || true
-                    zowe zos-files create data-set-partitioned "${HLQ}.SQL" --volume-serial ZXPM05 --data-set-type LIBRARY --record-format FB --record-length 80 --block-size 6160 || true
-                """
-            }
-        }
-
         stage('Upload COBOL') {
             steps {
                 sh "zowe zos-files upload dir-to-pds src/cobol ${HLQ}.CBL"
