@@ -1,0 +1,66 @@
+//CLMSJOB  JOB (Z77140,CLMS),'CLAIMS BATCH',CLASS=A,
+//             MSGCLASS=H,MSGLEVEL=(1,1),
+//             NOTIFY=&SYSUID,REGION=0M,
+//             TIME=1440
+//*================================================================
+//* INSURANCE CLAIMS BATCH - MASTER JOB
+//* STEP010: CLMSVALD - Validate claims (VSAM -> valid/reject)
+//* STEP020: CLMSDB2  - Load valid claims into DB2 CLAIMS_MASTER
+//* STEP030: CLMSRPT  - Generate summary report by claim type
+//* STEP040: CLMSALRT - REXX alert for claims > $50K
+//*================================================================
+//* COND chaining: each step bypassed if prior step RC > 0
+//*================================================================
+//JOBLIB    DD DSN=Z77140.LOAD,DISP=SHR
+//          DD DSN=DSNC10.SDSNLOAD,DISP=SHR
+//          DD DSN=CEE.SCEERUN,DISP=SHR
+//*
+//*--- STEP010: COBOL Validation ---
+//*
+//STEP010  EXEC PGM=CLMSVALD
+//CLAIMIN   DD DSN=Z77140.VSAMDS,DISP=SHR
+//VALIDOUT  DD DSN=Z77140.CLAIMS.VALID,DISP=OLD
+//REJCTOUT  DD DSN=Z77140.CLAIMS.REJECT,DISP=OLD
+//SYSOUT    DD SYSOUT=*
+//SYSUDUMP  DD SYSOUT=*
+//*
+//*--- STEP020: DB2 Load (via DSN command processor) ---
+//*
+//STEP020  EXEC PGM=IKJEFT01,COND=(4,LT,STEP010)
+//CLAIMIN   DD DSN=Z77140.CLAIMS.VALID,DISP=SHR
+//SYSTSPRT  DD SYSOUT=*
+//SYSPRINT  DD SYSOUT=*
+//SYSOUT    DD SYSOUT=*
+//SYSUDUMP  DD SYSOUT=*
+//SYSTSIN   DD *
+  DSN SYSTEM(DBCG)
+  RUN PROGRAM(CLMSDB2) PLAN(CLMPLAN) -
+      LIB('Z77140.LOAD')
+  END
+/*
+//*
+//*--- STEP030: DB2 Report (via DSN command processor) ---
+//*
+//STEP030  EXEC PGM=IKJEFT01,COND=(4,LT,STEP020)
+//RPTFILE   DD DSN=Z77140.CLAIMS.REPORT,DISP=OLD
+//SYSTSPRT  DD SYSOUT=*
+//SYSPRINT  DD SYSOUT=*
+//SYSOUT    DD SYSOUT=*
+//SYSUDUMP  DD SYSOUT=*
+//SYSTSIN   DD *
+  DSN SYSTEM(DBCG)
+  RUN PROGRAM(CLMSRPT) PLAN(CLMPLAN) -
+      LIB('Z77140.LOAD')
+  END
+/*
+//*
+//*--- STEP040: REXX High-Value Alert (via TSO/IKJEFT01) ---
+//*
+//STEP040  EXEC PGM=IKJEFT01,COND=(4,LT,STEP030),
+//             PARM='%CLMSALRT DBCG'
+//SYSPROC   DD DSN=Z77140.REXX,DISP=SHR
+//SYSTSPRT  DD SYSOUT=*
+//SYSTSIN   DD DUMMY
+//SYSOUT    DD SYSOUT=*
+//SYSUDUMP  DD SYSOUT=*
+//

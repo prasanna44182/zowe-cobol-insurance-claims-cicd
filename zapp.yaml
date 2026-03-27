@@ -1,0 +1,39 @@
+name: zowe-cobol-insurance-claims-cicd
+description: >-
+  Insurance Claims Batch System — COBOL/DB2/VSAM on z/OS.
+  Property groups configure IBM Z Open Editor for COPY resolution
+  and JCL PROC lookup.
+author: Prasanna Kumar Madala
+propertyGroups:
+  - name: cobol-sources
+    language: cobol
+    compilerOptions: RENT,APOST,CICS(NONE)
+    libraries:
+      - name: syslib
+        type: local
+        locations:
+          - 'src/copybook'
+          - 'src/cobol'
+      - name: syslib
+        type: mvs
+        locations:
+          - 'Z77140.COPYBOOK'
+          - 'Z77140.CBL'
+  - name: jcl-sources
+    language: jcl
+    libraries:
+      - name: proclib
+        type: local
+        locations:
+          - 'src/jcl'
+      - name: proclib
+        type: mvs
+        locations:
+          - 'Z77140.JCL'
+  - name: rexx-sources
+    language: rexx
+    libraries:
+      - name: syslib
+        type: local
+        locations:
+          - 'src/rexx'
