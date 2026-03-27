@@ -5,7 +5,7 @@
 
 - **Developer:** Prasanna Kumar Madala  
 - **Platform:** IBM Z Xplore (IBM official learning environment)  
-- **Domain:** Insurance claims — MassMutual & MetLife experience  
+- **Domain:** Insurance claims 
 
 ## Overview
 
