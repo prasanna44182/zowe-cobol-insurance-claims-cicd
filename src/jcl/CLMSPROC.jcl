@@ -8,7 +8,8 @@
 //* Parameters:
 //*   MEMBER - Program name (e.g. CLMSDB2, CLMSRPT)
 //*   SUBSYS - DB2 subsystem name (default: DBCG)
-//*   PKG    - DB2 package collection name (default: Z77140, Xplore user collection)
+//*   PKG    - DB2 package collection (default: Z77140)
+//*            Xplore: usually same as your HLQ
 //*================================================================
 //*
 //*--- DB2 Precompile ---
