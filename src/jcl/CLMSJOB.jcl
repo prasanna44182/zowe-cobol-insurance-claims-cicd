@@ -12,8 +12,8 @@
 //* COND chaining: each step bypassed if prior step RC > 0
 //*================================================================
 //JOBLIB    DD DSN=Z77140.LOAD,DISP=SHR
-//          DD DSN=DSNC10.SDSNLOAD,DISP=SHR
-//          DD DSN=DSNC10.DBCG.RUNLIB.LOAD,DISP=SHR
+//          DD DSN=DSND10.SDSNLOAD,DISP=SHR
+//          DD DSN=DSND10.DBDG.RUNLIB.LOAD,DISP=SHR
 //          DD DSN=CEE.SCEERUN,DISP=SHR
 //*
 //*--- STEP010: COBOL Validation ---
@@ -34,7 +34,7 @@
 //SYSOUT    DD SYSOUT=*
 //SYSUDUMP  DD SYSOUT=*
 //SYSTSIN   DD *
-  DSN SYSTEM(DBCG)
+  DSN SYSTEM(DBDG)
   RUN PROGRAM(CLMSDB2) PLAN(CLMPLAN) -
       LIB('Z77140.LOAD')
   END
@@ -49,7 +49,7 @@
 //SYSOUT    DD SYSOUT=*
 //SYSUDUMP  DD SYSOUT=*
 //SYSTSIN   DD *
-  DSN SYSTEM(DBCG)
+  DSN SYSTEM(DBDG)
   RUN PROGRAM(CLMSRPT) PLAN(CLMPLAN) -
       LIB('Z77140.LOAD')
   END
@@ -58,7 +58,7 @@
 //*--- STEP040: REXX High-Value Alert (via TSO/IKJEFT01) ---
 //*
 //STEP040  EXEC PGM=IKJEFT01,COND=(4,LT,STEP030),
-//             PARM='%CLMSALRT DBCG'
+//             PARM='%CLMSALRT DBDG'
 //SYSPROC   DD DSN=Z77140.REXX,DISP=SHR
 //SYSTSPRT  DD SYSOUT=*
 //SYSTSIN   DD DUMMY
