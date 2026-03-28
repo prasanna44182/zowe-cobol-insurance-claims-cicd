@@ -13,6 +13,7 @@
 //*================================================================
 //JOBLIB    DD DSN=Z77140.LOAD,DISP=SHR
 //          DD DSN=DSNC10.SDSNLOAD,DISP=SHR
+//          DD DSN=DSNC10.DBCG.RUNLIB.LOAD,DISP=SHR
 //          DD DSN=CEE.SCEERUN,DISP=SHR
 //*
 //*--- STEP010: COBOL Validation ---
