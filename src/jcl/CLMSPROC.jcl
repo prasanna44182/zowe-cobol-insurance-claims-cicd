@@ -1,4 +1,4 @@
-//CLMSPROC  PROC MEMBER=,SUBSYS=DBCG,PKG=CLMPKG
+//CLMSPROC  PROC MEMBER=,SUBSYS=DBCG,PKG=Z77140
 //*================================================================
 //* DB2 COMPILE PROC - INSURANCE CLAIMS BATCH
 //* Precompile, compile, link-edit, and bind a DB2 COBOL program.
@@ -8,7 +8,7 @@
 //* Parameters:
 //*   MEMBER - Program name (e.g. CLMSDB2, CLMSRPT)
 //*   SUBSYS - DB2 subsystem name (default: DBCG)
-//*   PKG    - DB2 package collection name (default: CLMPKG)
+//*   PKG    - DB2 package collection name (default: Z77140, Xplore user collection)
 //*================================================================
 //*
 //*--- DB2 Precompile ---

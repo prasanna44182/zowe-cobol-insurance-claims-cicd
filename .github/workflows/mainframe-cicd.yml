@@ -1,62 +1,14 @@
-# =================================================================
-# Mainframe CI/CD — GitHub Actions + Zowe CLI
-# Insurance Claims Batch System
-# Trigger: push to main touching src/**
-# Runner: self-hosted on Mac (Zowe CLI configured)
-# =================================================================
+# Intentionally inactive — CI/CD is Jenkins + Zowe only (see Jenkinsfile).
+# No push trigger; kept so the workflows directory remains valid if re-enabled later.
 
-name: Mainframe CI/CD
+name: Mainframe CI/CD (inactive)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-
-env:
-  ZOSMF_HLQ: Z77140
-  ZOWE_PROFILE: zosmf
+  workflow_dispatch:
 
 jobs:
-  deploy-to-mainframe:
-    runs-on: self-hosted
+  noop:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Upload COBOL source to PDS
-        run: |
-          zowe zos-files upload dir-to-pds src/cobol ${{ env.ZOSMF_HLQ }}.CBL
-
-      - name: Upload COPYBOOKS to PDS
-        run: |
-          zowe zos-files upload dir-to-pds src/copybook ${{ env.ZOSMF_HLQ }}.COPYBOOK
-
-      - name: Upload JCL to PDS
-        run: |
-          zowe zos-files upload dir-to-pds src/jcl ${{ env.ZOSMF_HLQ }}.JCL
-
-      - name: Upload REXX to PDS
-        run: |
-          zowe zos-files upload dir-to-pds src/rexx ${{ env.ZOSMF_HLQ }}.REXX
-
-      - name: Upload DB2 DDL
-        run: |
-          zowe zos-files upload dir-to-pds src/db2 ${{ env.ZOSMF_HLQ }}.SQL
-
-      - name: Submit Compile Job
-        id: compile
-        run: |
-          JOB_OUTPUT=$(zowe jobs submit data-set "${{ env.ZOSMF_HLQ }}.JCL(CLMSCMP)" --wait-for-output --rff jobid --rft string)
-          echo "jobid=$JOB_OUTPUT" >> $GITHUB_OUTPUT
-
-      - name: Check Return Code
-        run: |
-          RETCODE=$(zowe jobs view job-status-by-jobid ${{ steps.compile.outputs.jobid }} --rff retcode --rft string)
-          echo "Return code: $RETCODE"
-          if [ "$RETCODE" != "CC 0000" ] && [ "$RETCODE" != "CC 0004" ]; then
-            echo "Build FAILED with $RETCODE"
-            zowe jobs view spool-files-by-jobid ${{ steps.compile.outputs.jobid }}
-            exit 1
-          fi
-          echo "Build succeeded — $RETCODE"
+      - name: Placeholder
+        run: echo "Use Jenkins at localhost:8080 — this workflow does not deploy to z/OS."

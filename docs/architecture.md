@@ -51,7 +51,7 @@ Defined in copybook `CLAIMREC.cpy`, shared across all COBOL programs.
 - **Tablespace:** CLMSTS (SEGSIZE 64, COMPRESS YES, LOCKSIZE ROW)
 - **Subsystem:** DBCG
 - **Plan:** CLMPLAN
-- **Package:** CLMPKG
+- **Package collection:** Z77140 (IBM Z Xplore user-named collection; adjust if your HLQ differs)
 - **Table:** Z77140.CLAIMS_MASTER
   - PK: `(POLICY_NO, CLAIM_ID)`
   - CHECK constraints on CLAIM_TYPE, STATUS, CLAIM_AMOUNT
@@ -93,7 +93,8 @@ All programs follow z/OS return code conventions:
 
 - **Master job:** `Z77140.JCL(CLMSJOB)` with JOBLIB
 - **Step chaining:** `COND=(4,LT,prev-step)` — bypass if prior RC > 4
-- **Compile job:** `Z77140.JCL(CLMSCMP)` — 7 steps (compile + DB2 precompile + bind)
+- **Compile job:** `Z77140.JCL(CLMSCMP)` — compile/link + DB2 precompile (integrated SQL path)
+- **Bind job:** `Z77140.JCL(CLMSBIND)` — packages in collection **Z77140**, plan **CLMPLAN** (submitted by CI after compile)
 
 ## CI/CD
 
@@ -102,15 +103,11 @@ All programs follow z/OS return code conventions:
 - **Jenkinsfile** — Declarative pipeline using Zowe CLI
 - **Stages:**
   1. Checkout — pulls source from GitHub
-  2. Upload Source — parallel upload of COBOL, Copybooks, JCL, REXX, DB2 DDL to z/OS PDSes
-  3. Compile — submits `Z77140.JCL(CLMSCMP)` via `zowe jobs submit data-set`
-  4. Verify Compile — checks return code (CC 0000 or CC 0004 = pass)
+  2. Upload Source — COBOL, Copybooks, JCL, REXX, DB2 DDL to z/OS PDSes
+  3. Compile — submits `Z77140.JCL(CLMSCMP)`
+  4. Verify Compile — CC 0000 or CC 0004
+  5. Bind DB2 — submits `Z77140.JCL(CLMSBIND)`
+  6. Verify Bind — CC 0000 or CC 0004
 - **Jenkins URL:** `http://localhost:8080`
 - **Job:** `insurance-claims-pipeline`
 - **Credentials:** z/OS username/password stored in Jenkins credential store (ID: `zos-credentials`)
-
-### GitHub Actions (Backup)
-
-- Workflow on `src/**` push to `main`
-- Zowe CLI uploads COBOL, copybooks, JCL, REXX, DB2 DDL to z/OS PDSes
-- Compile job CLMSCMP verifies CC 0000 or CC 0004

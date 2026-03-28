@@ -57,16 +57,12 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 - **JCL** — Master job (CLMSJOB), compile job (CLMSCMP), DB2 compile PROC
 - **VSAM** — KSDS input with 100-byte records
 - **Zowe CLI** — Mainframe integration for CI/CD
-- **Jenkins** — Primary CI/CD pipeline (Jenkinsfile)
-- **GitHub Actions** — Backup CI/CD workflow
+- **Jenkins** — CI/CD pipeline (Jenkinsfile + Zowe CLI)
 
 ## CI/CD
 
-- **Jenkins** (primary) — Zowe CLI pipeline at `http://localhost:8080`
-  - Stages: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → Compile → Verify
-  - Parallel uploads to z/OS PDSes via Zowe CLI
-  - Submits `CLMSCMP` compile job and verifies RC 0000/0004
-- **GitHub Actions** (backup) — workflow on `src/**` push to `main`
+- **Jenkins** — Zowe CLI pipeline at `http://localhost:8080`
+  - One run: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → **Compile** (`CLMSCMP`) → **Bind** (`CLMSBIND`, collection **Z77140**) → verify both RC 0000/0004
 - z/OS credentials stored in Jenkins credentials store
 
 ## Quick Start
@@ -82,6 +78,7 @@ zowe zos-files upload dir-to-pds src/cobol Z77140.CBL
 zowe zos-files upload dir-to-pds src/jcl Z77140.JCL
 zowe zos-files upload dir-to-pds src/rexx Z77140.REXX
 zowe jobs submit data-set "Z77140.JCL(CLMSCMP)" --wait-for-output
+zowe jobs submit data-set "Z77140.JCL(CLMSBIND)" --wait-for-output
 ```
 
 ## Project Structure
@@ -90,14 +87,13 @@ zowe jobs submit data-set "Z77140.JCL(CLMSCMP)" --wait-for-output
 ├── src/
 │   ├── cobol/          CLMSVALD.cbl, CLMSDB2.cbl, CLMSRPT.cbl
 │   ├── copybook/       CLAIMREC.cpy (shared record layout), DCLCLMS.cpy (DCLGEN)
-│   ├── jcl/            CLMSJOB.jcl, CLMSCMP.jcl, CLMSPROC.jcl
+│   ├── jcl/            CLMSJOB.jcl, CLMSCMP.jcl, CLMSBIND.jcl, CLMSPROC.jcl
 │   ├── rexx/           CLMSALRT.rexx
 │   ├── db2/            CLMSDDL.sql (schema + tablespace + GRANTs)
 │   └── data/           Sample 100-record claims data + VSAM setup JCL
 ├── application-conf/   IBM DBB zAppBuild configuration
 ├── docs/               Architecture documentation
 ├── Jenkinsfile         Jenkins CI/CD pipeline (Zowe CLI)
-├── .github/workflows/  Backup GitHub Actions workflow
 └── README.md
 ```
 

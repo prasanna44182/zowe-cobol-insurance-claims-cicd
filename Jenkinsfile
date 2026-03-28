@@ -10,7 +10,7 @@ pipeline {
     options {
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '10'))
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 20, unit: 'MINUTES')
     }
 
     stages {
@@ -78,17 +78,46 @@ pipeline {
                 }
             }
         }
+
+        stage('Bind DB2') {
+            steps {
+                script {
+                    def output = sh(
+                        script: "zowe jobs submit data-set \"${HLQ}.JCL(CLMSBIND)\" --wait-for-output --rff jobid --rft string",
+                        returnStdout: true
+                    ).trim()
+                    env.BIND_JOBID = output
+                    echo "Bind Job ID: ${env.BIND_JOBID}"
+                }
+            }
+        }
+
+        stage('Verify Bind') {
+            steps {
+                script {
+                    def retcode = sh(
+                        script: "zowe jobs view job-status-by-jobid ${env.BIND_JOBID} --rff retcode --rft string",
+                        returnStdout: true
+                    ).trim()
+                    echo "Bind Return Code: ${retcode}"
+                    if (retcode != 'CC 0000' && retcode != 'CC 0004') {
+                        sh "zowe jobs view all-spool-content ${env.BIND_JOBID}"
+                        error("Bind FAILED with ${retcode}")
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo "Pipeline SUCCESS - all programs compiled on z/OS"
+            echo "Pipeline SUCCESS — compile + DB2 bind verified on z/OS"
         }
         failure {
             echo "Pipeline FAILED - check JES spool output"
         }
         always {
-            echo "HLQ: ${HLQ} | Job: ${env.COMPILE_JOBID ?: 'N/A'}"
+            echo "HLQ: ${HLQ} | Compile: ${env.COMPILE_JOBID ?: 'N/A'} | Bind: ${env.BIND_JOBID ?: 'N/A'}"
         }
     }
 }

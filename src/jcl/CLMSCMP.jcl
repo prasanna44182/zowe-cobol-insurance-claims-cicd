@@ -4,11 +4,11 @@
 //             TIME=1440
 //*================================================================
 //* COMPILE ALL COBOL PROGRAMS - INSURANCE CLAIMS BATCH
-//* STEP1:        CLMSVALD (non-DB2, IGYWCL)
-//* STEP2/2B:     CLMSDB2  (integrated SQL compile + link + bind)
-//* STEP3/3B:     CLMSRPT  (integrated SQL compile + link + bind)
-//* Integrated SQL: IGYCRCTL PARM=SQL,APOST + DBRMLIB (no DSNHPC)
-//* Matches VENDOR.PROCLIB(DB2CBL) / DBDG / DSND10 for student LPAR
+//* STEP1:   CLMSVALD (non-DB2, IGYWCL)
+//* STEP2:   CLMSDB2  (integrated SQL compile + link; DBRM -> Z77140.DBRM)
+//* STEP3:   CLMSRPT  (integrated SQL compile + link)
+//* BIND: CI submits CLMSBIND after this job (packages in collection Z77140)
+//* Integrated SQL: PARM.COBOL=SQL,APOST + DSND10.DBDG.SDSNEXIT (no DSNHPC)
 //*================================================================
 //*
 //*--- STEP1: Compile CLMSVALD (non-DB2) ---
@@ -21,7 +21,7 @@
 //LKED.SYSLIB  DD DSN=CEE.SCEELKED,DISP=SHR
 //SYSUDUMP  DD SYSOUT=*
 //*
-//*--- STEP2: Compile + link CLMSDB2 (DB2 coprocessor, not DSNHPC) ---
+//*--- STEP2: Compile + link CLMSDB2 (DB2 coprocessor) ---
 //*
 //STEP2    EXEC IGYWCL,COND=(4,LT,STEP1.COBOL),PARM.COBOL='SQL,APOST'
 //COBOL.STEPLIB DD DSN=IGY640.SIGYCOMP,DISP=SHR
@@ -39,29 +39,9 @@
 //             DD DSN=DSND10.SDSNLOAD,DISP=SHR
 //SYSUDUMP  DD SYSOUT=*
 //*
-//*--- STEP2B: Bind CLMSDB2 ---
+//*--- STEP3: Compile + link CLMSRPT (after STEP2 link, not after BIND) ---
 //*
-//STEP2B   EXEC PGM=IKJEFT01,COND=(4,LT,STEP2.COBOL)
-//STEPLIB   DD DSN=DSND10.SDSNLOAD,DISP=SHR
-//SYSTSPRT  DD SYSOUT=*
-//SYSPRINT  DD SYSOUT=*
-//SYSUDUMP  DD SYSOUT=*
-//SYSTSIN   DD *
-  DSN SYSTEM(DBDG)
-  BIND PACKAGE(CLMPKG) -
-       MEMBER(CLMSDB2) -
-       LIBRARY('Z77140.DBRM') -
-       ACTION(REPLACE) -
-       ISOLATION(CS)
-  BIND PLAN(CLMPLAN) -
-       PKLIST(CLMPKG.*) -
-       ACTION(REPLACE)
-  END
-/*
-//*
-//*--- STEP3: Compile + link CLMSRPT (DB2 coprocessor) ---
-//*
-//STEP3    EXEC IGYWCL,COND=(4,LT,STEP2B),PARM.COBOL='SQL,APOST'
+//STEP3    EXEC IGYWCL,COND=(4,LT,STEP2.LKED),PARM.COBOL='SQL,APOST'
 //COBOL.STEPLIB DD DSN=IGY640.SIGYCOMP,DISP=SHR
 //         DD DSN=CEE.SCEERUN,DISP=SHR
 //         DD DSN=CEE.SCEERUN2,DISP=SHR
@@ -76,24 +56,4 @@
 //LKED.SYSLIB  DD DSN=CEE.SCEELKED,DISP=SHR
 //             DD DSN=DSND10.SDSNLOAD,DISP=SHR
 //SYSUDUMP  DD SYSOUT=*
-//*
-//*--- STEP3B: Bind CLMSRPT ---
-//*
-//STEP3B   EXEC PGM=IKJEFT01,COND=(4,LT,STEP3.COBOL)
-//STEPLIB   DD DSN=DSND10.SDSNLOAD,DISP=SHR
-//SYSTSPRT  DD SYSOUT=*
-//SYSPRINT  DD SYSOUT=*
-//SYSUDUMP  DD SYSOUT=*
-//SYSTSIN   DD *
-  DSN SYSTEM(DBDG)
-  BIND PACKAGE(CLMPKG) -
-       MEMBER(CLMSRPT) -
-       LIBRARY('Z77140.DBRM') -
-       ACTION(REPLACE) -
-       ISOLATION(CS)
-  BIND PLAN(CLMPLAN) -
-       PKLIST(CLMPKG.*) -
-       ACTION(REPLACE)
-  END
-/*
 //
