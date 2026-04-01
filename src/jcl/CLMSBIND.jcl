@@ -9,7 +9,8 @@
 //* Plan CLMPLAN must exist before CLMSJOB RUN PROGRAM ... PLAN(CLMPLAN)
 //*================================================================
 //BIND     EXEC PGM=IKJEFT01
-//STEPLIB   DD DSN=DSND10.SDSNLOAD,DISP=SHR
+//STEPLIB   DD DSN=Z77140.LOAD,DISP=SHR
+//         DD DSN=DSND10.SDSNLOAD,DISP=SHR
 //SYSTSPRT  DD SYSOUT=*
 //SYSPRINT  DD SYSOUT=*
 //SYSUDUMP  DD SYSOUT=*
