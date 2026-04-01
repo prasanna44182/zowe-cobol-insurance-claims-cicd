@@ -28,7 +28,6 @@
 
        WORKING-STORAGE SECTION.
            EXEC SQL INCLUDE SQLCA END-EXEC.
-          EXEC SQL SET CURRENT SCHEMA = 'Z77140' END-EXEC.
 
        01  WS-PROGRAM-ID          PIC X(08) VALUE 'CLMSRPT '.
 
@@ -147,6 +146,9 @@
            STOP RUN.
       *---------------------------------------------------------------
        1000-INITIALIZE.
+           EXEC SQL
+               SET CURRENT SCHEMA = 'Z77140'
+           END-EXEC.
            MOVE FUNCTION CURRENT-DATE
                TO WS-CURRENT-DATE-DATA.
            STRING WS-DATE-YYYY '-' WS-DATE-MM '-' WS-DATE-DD

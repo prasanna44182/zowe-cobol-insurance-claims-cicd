@@ -27,10 +27,9 @@
            BLOCK CONTAINS 0 RECORDS.
            COPY CLAIMREC.
 
-      WORKING-STORAGE SECTION.
-          EXEC SQL INCLUDE SQLCA END-EXEC.
-          EXEC SQL SET CURRENT SCHEMA = 'Z77140' END-EXEC.
-          COPY DCLCLMS.
+       WORKING-STORAGE SECTION.
+           EXEC SQL INCLUDE SQLCA END-EXEC.
+           COPY DCLCLMS.
 
        01  WS-PROGRAM-ID          PIC X(08) VALUE 'CLMSDB2 '.
 
@@ -63,6 +62,9 @@
            STOP RUN.
       *---------------------------------------------------------------
        1000-INITIALIZE.
+           EXEC SQL
+               SET CURRENT SCHEMA = 'Z77140'
+           END-EXEC.
            DISPLAY WS-PROGRAM-ID ': DB2 LOAD STARTING'.
            OPEN INPUT CLAIM-IN.
            IF WS-CLAIMIN-STATUS NOT = '00'
