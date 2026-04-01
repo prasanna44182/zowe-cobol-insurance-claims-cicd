@@ -62,7 +62,7 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 ## CI/CD
 
 - **Jenkins** — Zowe CLI pipeline at `http://localhost:8080`
-  - One run: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → **Compile** (`CLMSCMP`) → **Bind** (`CLMSBIND`, collection **Z77140**, plan **Z77140**) → verify both RC 0000/0004
+  - One run: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → **Compile** (`CLMSCMP`) → **Bind** (`CLMSBIND`, **`BIND PLAN` + `MEMBER`**, plan **Z77140**) → verify both RC 0000/0004
 - z/OS credentials stored in Jenkins credentials store
 
 ## Quick Start

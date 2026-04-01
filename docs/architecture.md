@@ -51,7 +51,7 @@ Defined in copybook `CLAIMREC.cpy`, shared across all COBOL programs.
 - **Tablespace:** CLMSTS (SEGSIZE 64, COMPRESS YES, LOCKSIZE ROW)
 - **Subsystem:** DBDG (IBM Z Xplore; adjust if your LPAR differs)
 - **Plan:** Z77140
-- **Package collection:** Z77140 (IBM Z Xplore user-named collection; adjust if your HLQ differs)
+- **Bind style (IBM Z Xplore):** No `BIND PACKAGE` (BINDADD removed). Use **`BIND PLAN(Z#####) MEMBER(...)`** from `Z#####.DBRMLIB`; first program `ACTION(REPLACE)`, additional programs `ACTION(ADD)`.
 - **Table:** Z77140.CLAIMS_MASTER
   - PK: `(POLICY_NO, CLAIM_ID)`
   - CHECK constraints on CLAIM_TYPE, STATUS, CLAIM_AMOUNT
@@ -94,7 +94,7 @@ All programs follow z/OS return code conventions:
 - **Master job:** `Z77140.JCL(CLMSJOB)` with JOBLIB
 - **Step chaining:** `COND=(4,LT,prev-step)` — bypass if prior RC > 4
 - **Compile job:** `Z77140.JCL(CLMSCMP)` — compile/link + DB2 precompile (integrated SQL path)
-- **Bind job:** `Z77140.JCL(CLMSBIND)` — packages in collection **Z77140**, plan **Z77140** (submitted by CI after compile)
+- **Bind job:** `Z77140.JCL(CLMSBIND)` — **`BIND PLAN` + `MEMBER`** from **Z77140.DBRMLIB** into plan **Z77140** (submitted by CI after compile)
 
 ## CI/CD
 

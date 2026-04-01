@@ -7,7 +7,7 @@
 //* STEP1:   CLMSVALD (non-DB2, IGYWCL)
 //* STEP2:   CLMSDB2  (integrated SQL compile + link; DBRM -> Z77140.DBRMLIB)
 //* STEP3:   CLMSRPT  (integrated SQL compile + link)
-//* BIND: CI submits CLMSBIND after this job (packages in collection Z77140)
+//* BIND: CI submits CLMSBIND after this job (BIND PLAN MEMBER -> Z77140)
 //* Integrated SQL: PARM.COBOL=SQL,APOST + DSND10.DBDG.SDSNEXIT (no DSNHPC)
 //*================================================================
 //*

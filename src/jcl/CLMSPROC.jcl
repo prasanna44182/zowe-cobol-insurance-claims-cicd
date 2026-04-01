@@ -1,4 +1,4 @@
-//CLMSPROC  PROC MEMBER=,SUBSYS=DBDG,PKG=Z77140
+//CLMSPROC  PROC MEMBER=,SUBSYS=DBDG,PKG=Z77140,BNDACT=REPLACE
 //*================================================================
 //* DB2 COMPILE PROC - INSURANCE CLAIMS BATCH
 //* Precompile, compile, link-edit, and bind a DB2 COBOL program.
@@ -8,8 +8,8 @@
 //* Parameters:
 //*   MEMBER - Program name (e.g. CLMSDB2, CLMSRPT)
 //*   SUBSYS - DB2 subsystem name (default: DBDG)
-//*   PKG    - DB2 package collection (default: Z77140)
-//*            Xplore: usually same as your HLQ
+//*   PKG    - Plan name (default Z77140; same as HLQ on Xplore)
+//*   BNDACT - REPLACE first DBRM into plan; ADD for each additional program
 //*================================================================
 //*
 //*--- DB2 Precompile ---
@@ -40,7 +40,7 @@
 //             DD DSN=DSND10.SDSNLOAD,DISP=SHR
 //SYSUDUMP  DD SYSOUT=*
 //*
-//*--- DB2 Bind Package + Plan ---
+//*--- DB2 Bind plan from DBRM (no BIND PACKAGE on IBM Z Xplore) ---
 //*
 //BIND     EXEC PGM=IKJEFT01,COND=(4,LT)
 //SYSTSPRT  DD SYSOUT=*
@@ -48,14 +48,11 @@
 //SYSUDUMP  DD SYSOUT=*
 //SYSTSIN   DD *,SYMBOLS=JCLONLY
   DSN SYSTEM(&SUBSYS)
-  BIND PACKAGE(&PKG) -
+  BIND PLAN(&PKG) -
        MEMBER(&MEMBER) -
        LIBRARY('Z77140.DBRMLIB') -
-       ACTION(REPLACE) -
+       ACTION(&BNDACT) -
        ISOLATION(CS)
-  BIND PLAN(Z77140) -
-       PKLIST(&PKG.*) -
-       ACTION(REPLACE)
   END
 /*
 //         PEND
