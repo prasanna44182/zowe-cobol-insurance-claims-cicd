@@ -25,7 +25,7 @@
   BIND PLAN(Z77140) -
        MEMBER(CLMSRPT) -
        LIBRARY('Z77140.DBRMLIB') -
-       ACTION(ADD) -
+       ACTION(REPLACE) -
        ISOLATION(CS)
   END
 /*
