@@ -6,7 +6,7 @@
 //* IBM Z Xplore typically grants BINDADD for your own user-named
 //* collection (e.g. Z77140); bind packages there, not a shared CLMPKG.
 //* DBRMs: Z77140.DBRMLIB(CLMSDB2) Z77140.DBRMLIB(CLMSRPT)
-//* Plan CLMPLAN must exist before CLMSJOB RUN PROGRAM ... PLAN(Z77140)
+//* Plan Z77140 must exist before CLMSJOB RUN PROGRAM ... PLAN(Z77140)
 //*================================================================
 //BIND     EXEC PGM=IKJEFT01
 //STEPLIB   DD DSN=Z77140.LOAD,DISP=SHR

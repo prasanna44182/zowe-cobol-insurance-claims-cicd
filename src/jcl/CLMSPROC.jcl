@@ -1,4 +1,4 @@
-//CLMSPROC  PROC MEMBER=,SUBSYS=DBCG,PKG=Z77140
+//CLMSPROC  PROC MEMBER=,SUBSYS=DBDG,PKG=Z77140
 //*================================================================
 //* DB2 COMPILE PROC - INSURANCE CLAIMS BATCH
 //* Precompile, compile, link-edit, and bind a DB2 COBOL program.
@@ -7,7 +7,7 @@
 //*
 //* Parameters:
 //*   MEMBER - Program name (e.g. CLMSDB2, CLMSRPT)
-//*   SUBSYS - DB2 subsystem name (default: DBCG)
+//*   SUBSYS - DB2 subsystem name (default: DBDG)
 //*   PKG    - DB2 package collection (default: Z77140)
 //*            Xplore: usually same as your HLQ
 //*================================================================
@@ -17,7 +17,7 @@
 //PRECOMP  EXEC PGM=DSNHPC,
 //             PARM='HOST(COBOL),APOST,SOURCE',
 //             COND=(4,LT)
-//DBRMLIB   DD DSN=Z77140.DBRM(&MEMBER),DISP=SHR
+//DBRMLIB   DD DSN=Z77140.DBRMLIB(&MEMBER),DISP=SHR
 //SYSCIN    DD DSN=&&DSNHOUT,DISP=(NEW,PASS),
 //             UNIT=SYSDA,SPACE=(TRK,(15,15))
 //SYSIN     DD DSN=Z77140.CBL(&MEMBER),DISP=SHR
@@ -37,7 +37,7 @@
 //             DD DSN=CEE.SCEESAMP,DISP=SHR
 //LKED.SYSLMOD DD DSN=Z77140.LOAD(&MEMBER),DISP=SHR
 //LKED.SYSLIB  DD DSN=CEE.SCEELKED,DISP=SHR
-//             DD DSN=DSNC10.SDSNLOAD,DISP=SHR
+//             DD DSN=DSND10.SDSNLOAD,DISP=SHR
 //SYSUDUMP  DD SYSOUT=*
 //*
 //*--- DB2 Bind Package + Plan ---
@@ -50,10 +50,10 @@
   DSN SYSTEM(&SUBSYS)
   BIND PACKAGE(&PKG) -
        MEMBER(&MEMBER) -
-       LIBRARY('Z77140.DBRM') -
+       LIBRARY('Z77140.DBRMLIB') -
        ACTION(REPLACE) -
        ISOLATION(CS)
-  BIND PLAN(CLMPLAN) -
+  BIND PLAN(Z77140) -
        PKLIST(&PKG.*) -
        ACTION(REPLACE)
   END

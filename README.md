@@ -42,7 +42,7 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 | Z77140.COPYBOOK          | PDS        | COBOL copybooks (shared)   |
 | Z77140.JCL               | PDS        | JCL members                |
 | Z77140.LOAD              | PDS        | Load modules               |
-| Z77140.DBRM              | PDS        | DB2 DBRMs                  |
+| Z77140.DBRMLIB           | PDS        | DB2 DBRM library           |
 | Z77140.REXX              | PDS        | REXX execs                 |
 | Z77140.VSAMDS            | VSAM KSDS  | Claims input (100-byte)    |
 | Z77140.CLAIMS.VALID      | Sequential | Valid claims output        |
@@ -62,7 +62,7 @@ Z77140.VSAMDS (VSAM KSDS, 100-byte records)
 ## CI/CD
 
 - **Jenkins** — Zowe CLI pipeline at `http://localhost:8080`
-  - One run: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → **Compile** (`CLMSCMP`) → **Bind** (`CLMSBIND`, collection **Z77140**) → verify both RC 0000/0004
+  - One run: Checkout → Upload (COBOL, Copybooks, JCL, REXX, DB2) → **Compile** (`CLMSCMP`) → **Bind** (`CLMSBIND`, collection **Z77140**, plan **Z77140**) → verify both RC 0000/0004
 - z/OS credentials stored in Jenkins credentials store
 
 ## Quick Start

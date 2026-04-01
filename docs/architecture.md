@@ -49,8 +49,8 @@ Defined in copybook `CLAIMREC.cpy`, shared across all COBOL programs.
 - **Schema:** Z77140
 - **Database:** CLMSDB
 - **Tablespace:** CLMSTS (SEGSIZE 64, COMPRESS YES, LOCKSIZE ROW)
-- **Subsystem:** DBCG
-- **Plan:** CLMPLAN
+- **Subsystem:** DBDG (IBM Z Xplore; adjust if your LPAR differs)
+- **Plan:** Z77140
 - **Package collection:** Z77140 (IBM Z Xplore user-named collection; adjust if your HLQ differs)
 - **Table:** Z77140.CLAIMS_MASTER
   - PK: `(POLICY_NO, CLAIM_ID)`
@@ -72,7 +72,7 @@ Defined in copybook `CLAIMREC.cpy`, shared across all COBOL programs.
 | Z77140.COPYBOOK          | PDS        | 80    | COBOL copybooks            |
 | Z77140.JCL               | PDS        | 80    | JCL members                |
 | Z77140.LOAD              | PDS        | —     | Load modules               |
-| Z77140.DBRM              | PDS        | 80    | DB2 DBRMs                  |
+| Z77140.DBRMLIB           | PDS        | 80    | DB2 DBRM library           |
 | Z77140.REXX              | PDS        | 80    | REXX execs                 |
 | Z77140.VSAMDS            | VSAM KSDS  | 100   | Claims input               |
 | Z77140.CLAIMS.VALID      | Sequential | 100   | Valid claims output        |
@@ -94,7 +94,7 @@ All programs follow z/OS return code conventions:
 - **Master job:** `Z77140.JCL(CLMSJOB)` with JOBLIB
 - **Step chaining:** `COND=(4,LT,prev-step)` — bypass if prior RC > 4
 - **Compile job:** `Z77140.JCL(CLMSCMP)` — compile/link + DB2 precompile (integrated SQL path)
-- **Bind job:** `Z77140.JCL(CLMSBIND)` — packages in collection **Z77140**, plan **CLMPLAN** (submitted by CI after compile)
+- **Bind job:** `Z77140.JCL(CLMSBIND)` — packages in collection **Z77140**, plan **Z77140** (submitted by CI after compile)
 
 ## CI/CD
 
