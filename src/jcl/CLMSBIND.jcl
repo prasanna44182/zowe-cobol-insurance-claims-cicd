@@ -11,7 +11,8 @@
 //*================================================================
 //BIND     EXEC PGM=IKJEFT01
 //STEPLIB   DD DSN=Z77140.LOAD,DISP=SHR
-//         DD DSN=DSND10.SDSNLOAD,DISP=SHR
+//          DD DSN=DSND10.SDSNLOAD,DISP=SHR
+//          DD DSN=DSND10.DBDG.SDSNEXIT,DISP=SHR
 //SYSTSPRT  DD SYSOUT=*
 //SYSPRINT  DD SYSOUT=*
 //SYSUDUMP  DD SYSOUT=*
