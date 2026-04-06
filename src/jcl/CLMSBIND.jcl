@@ -3,7 +3,7 @@
 //             NOTIFY=&SYSUID,REGION=0M
 //*================================================================
 //* BIND plan Z77140 from DBRMs (run after CLMSCMP)
-//* IBM Z Xplore: BINDADD removed platform-wide — BIND PACKAGE is not
+//* IBM Z Xplore: BINDADD removed platform-wide BIND PACKAGE is not
 //* allowed. Bind only into your own Z##### plan using BIND PLAN with
 //* MEMBER (DBRM registration + plan in one step per program).
 //* DBRMs: Z77140.DBRMLIB(CLMSDB2) Z77140.DBRMLIB(CLMSRPT)
