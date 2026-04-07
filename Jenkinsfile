@@ -162,10 +162,10 @@ pipeline {
                         echo "Uploaded SQL to USS: /z/${HLQ.toLowerCase()}/insert_claims.sql"
                     """
                     
-                    // Step 4: Execute SQL via USS db2 command
+                    // Step 4: Execute SQL via USS db2 command (Z Xplore CLP)
                     sh """
                         echo "Executing SQL via USS DB2 CLI..."
-                        zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -tvf insert_claims.sql" || {
+                        zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -f insert_claims.sql" || {
                             echo "DB2 command completed (check output for any SQL errors)"
                         }
                     """

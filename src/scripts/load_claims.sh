@@ -2,6 +2,7 @@
 # ==============================================================
 # load_claims.sh - Generate SQL INSERT statements from CLAIMS.VALID
 # Reads fixed-length records (LRECL=100) and outputs INSERT SQL
+# For Z Xplore DB2 CLP (no semicolons, one statement per line)
 # Usage: ./load_claims.sh <input_file> <output_sql_file>
 # ==============================================================
 
@@ -29,10 +30,10 @@ echo "Output SQL file: $OUTPUT_FILE"
 # 71     STATUS         X(01)
 # 72-100 FILLER         X(29)
 
-# Start SQL file with connection and schema
+# Start SQL file with connection (Z Xplore CLP format - no semicolons)
 cat > "$OUTPUT_FILE" << 'EOF'
-CONNECT TO DBDG;
-SET CURRENT SCHEMA = 'Z77140';
+connect to 204.90.115.200:5040/ZXPDB2 user z77140 using PIK13IHC
+SET CURRENT SCHEMA = 'Z77140'
 EOF
 
 COUNT=0
@@ -92,18 +93,18 @@ while IFS= read -r line || [ -n "$line" ]; do
         continue
     fi
     
-    # Generate INSERT statement
+    # Generate INSERT statement (no semicolon for Z Xplore CLP)
     cat >> "$OUTPUT_FILE" << EOF
-INSERT INTO CLAIMS_MASTER (POLICY_NO, CLAIM_ID, CLAIMANT_NAME, CLAIM_DATE, CLAIM_TYPE, CLAIM_AMOUNT, COVERAGE_CODE, STATUS, INSERT_TS) VALUES ('${POLICY_NO}', '${CLAIM_ID}', '${CLAIMANT_NAME_ESC}', ${CLAIM_DATE}, '${CLAIM_TYPE}', ${CLAIM_AMOUNT}, '${COVERAGE_CODE}', '${STATUS}', CURRENT TIMESTAMP);
+INSERT INTO CLAIMS_MASTER (POLICY_NO, CLAIM_ID, CLAIMANT_NAME, CLAIM_DATE, CLAIM_TYPE, CLAIM_AMOUNT, COVERAGE_CODE, STATUS, INSERT_TS) VALUES ('${POLICY_NO}', '${CLAIM_ID}', '${CLAIMANT_NAME_ESC}', ${CLAIM_DATE}, '${CLAIM_TYPE}', ${CLAIM_AMOUNT}, '${COVERAGE_CODE}', '${STATUS}', CURRENT TIMESTAMP)
 EOF
     
     GENERATED=$((GENERATED + 1))
 
 done < "$INPUT_FILE"
 
-# Add COMMIT at the end
-echo "COMMIT;" >> "$OUTPUT_FILE"
-echo "CONNECT RESET;" >> "$OUTPUT_FILE"
+# Add COMMIT and DISCONNECT at the end (no semicolons for Z Xplore CLP)
+echo "COMMIT" >> "$OUTPUT_FILE"
+echo "DISCONNECT" >> "$OUTPUT_FILE"
 
 echo "================================================"
 echo "SQL Generation Complete"
