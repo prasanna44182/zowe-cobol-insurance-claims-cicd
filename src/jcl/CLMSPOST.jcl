@@ -34,7 +34,9 @@
 //*
 //*--- STEP020: REXX High-Value Alert (via TSO/IKJEFT01) ---
 //*
-//STEP020  EXEC PGM=IKJEFT01,COND=(4,LT,STEP010),
+//* Note: STEP010 (CLMSRPT) may fail with -991 plan auth on Z Xplore
+//* Run STEP020 regardless of STEP010 result
+//STEP020  EXEC PGM=IKJEFT01,
 //             PARM='%CLMSALRT DBDG'
 //STEPLIB   DD DISP=SHR,DSN=Z77140.LOAD
 //          DD DISP=SHR,DSN=DSND10.SDSNLOAD
