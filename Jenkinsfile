@@ -180,26 +180,39 @@ pipeline {
                 script {
                     echo "=== Generating Claims Report via USS DB2 CLI ==="
                     
-                    // Upload report script to USS
+                    // Step 1: Create SQL query file locally (Z Xplore CLP format - no semicolons)
+                    writeFile file: 'report_query.sql', text: '''connect to 204.90.115.200:5040/ZXPDB2 user z77140 using PIK13IHC
+SET CURRENT SCHEMA = 'Z77140'
+SELECT CLAIM_TYPE, COUNT(*) AS CNT, SUM(CLAIM_AMOUNT) AS TOTAL_AMT, AVG(CLAIM_AMOUNT) AS AVG_AMT, MAX(CLAIM_AMOUNT) AS MAX_AMT FROM CLAIMS_MASTER GROUP BY CLAIM_TYPE ORDER BY CLAIM_TYPE
+SELECT COUNT(*) AS TOTAL_CNT, SUM(CLAIM_AMOUNT) AS GRAND_TOTAL FROM CLAIMS_MASTER
+DISCONNECT
+'''
+                    
+                    // Step 2: Upload SQL file to USS
+                    sh """
+                        zowe zos-files upload file-to-uss report_query.sql "/z/${HLQ.toLowerCase()}/report_query.sql"
+                        echo "Uploaded report query to USS"
+                    """
+                    
+                    // Step 3: Execute SQL via USS db2 command and capture output
+                    sh """
+                        echo "Executing report query via USS DB2 CLI..."
+                        zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -f report_query.sql" > db2_report_output.txt 2>&1 || true
+                        echo "=== RAW DB2 OUTPUT ==="
+                        cat db2_report_output.txt
+                        echo "=== END RAW OUTPUT ==="
+                    """
+                    
+                    // Step 4: Parse raw output and generate formatted report locally
                     sh """
                         chmod +x src/scripts/generate_report.sh
-                        zowe zos-files upload file-to-uss src/scripts/generate_report.sh "/z/${HLQ.toLowerCase()}/generate_report.sh"
-                        echo "Uploaded report script to USS"
+                        ./src/scripts/generate_report.sh db2_report_output.txt claims_report.txt
                     """
                     
-                    // Execute report script via USS
+                    // Display report
                     sh """
-                        echo "Generating report via USS..."
-                        zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && chmod +x generate_report.sh && ./generate_report.sh claims_report.txt" || {
-                            echo "Report generation completed"
-                        }
-                    """
-                    
-                    // Download and display report
-                    sh """
-                        zowe zos-files download uss-file "/z/${HLQ.toLowerCase()}/claims_report.txt" -f claims_report.txt || true
                         echo "=== CLAIMS SUMMARY REPORT ==="
-                        cat claims_report.txt || echo "Report file not available"
+                        cat claims_report.txt
                     """
                     
                     echo "=== USS DB2 Report Complete ==="
@@ -248,7 +261,7 @@ pipeline {
         always {
             echo "HLQ: ${HLQ} | Compile: ${env.COMPILE_JOBID ?: 'N/A'} | Bind: ${env.BIND_JOBID ?: 'N/A'} | Validate: ${env.VALIDATE_JOBID ?: 'N/A'} | PostLoad: ${env.POSTLOAD_JOBID ?: 'N/A'}"
             // Cleanup temporary files
-            sh "rm -f claims_valid.txt insert_claims.sql claims_report.txt || true"
+            sh "rm -f claims_valid.txt insert_claims.sql claims_report.txt report_query.sql db2_report_output.txt || true"
         }
     }
 }

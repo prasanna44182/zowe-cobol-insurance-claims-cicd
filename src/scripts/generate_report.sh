@@ -1,34 +1,17 @@
 #!/bin/bash
 # ==============================================================
-# generate_report.sh - Generate Claims Summary Report via USS DB2
-# Queries CLAIMS_MASTER, groups by claim type, produces report
+# generate_report.sh - Generate Claims Summary Report from DB2 output
+# Parses raw DB2 output and formats it into a report
 # For Z Xplore DB2 CLP
-# Usage: ./generate_report.sh <output_report_file>
+# Usage: ./generate_report.sh <db2_raw_output> <output_report_file>
 # ==============================================================
 
-OUTPUT_FILE="${1:-claims_report.txt}"
-SQL_FILE="report_query.sql"
-RAW_OUTPUT="db2_raw_output.txt"
+RAW_OUTPUT="${1:-db2_report_output.txt}"
+OUTPUT_FILE="${2:-claims_report.txt}"
 
 echo "Generating Claims Summary Report..."
+echo "Input (raw DB2 output): $RAW_OUTPUT"
 echo "Output file: $OUTPUT_FILE"
-
-# Create SQL query file (Z Xplore CLP format - no semicolons)
-cat > "$SQL_FILE" << 'EOF'
-connect to 204.90.115.200:5040/ZXPDB2 user z77140 using PIK13IHC
-SET CURRENT SCHEMA = 'Z77140'
-SELECT CLAIM_TYPE, COUNT(*) AS CNT, SUM(CLAIM_AMOUNT) AS TOTAL_AMT, AVG(CLAIM_AMOUNT) AS AVG_AMT, MAX(CLAIM_AMOUNT) AS MAX_AMT FROM CLAIMS_MASTER GROUP BY CLAIM_TYPE ORDER BY CLAIM_TYPE
-SELECT COUNT(*) AS TOTAL_CNT, SUM(CLAIM_AMOUNT) AS GRAND_TOTAL FROM CLAIMS_MASTER
-DISCONNECT
-EOF
-
-# Execute query and capture output
-db2 -f "$SQL_FILE" > "$RAW_OUTPUT" 2>&1 || true
-
-# Debug: show raw output
-echo "=== RAW DB2 OUTPUT ==="
-cat "$RAW_OUTPUT"
-echo "=== END RAW OUTPUT ==="
 
 # Get current date/time
 REPORT_DATE=$(date '+%Y-%m-%d')
@@ -51,7 +34,7 @@ EOF
 # We need to find lines that have: TYPE COUNT TOTAL AVG MAX pattern
 
 # Extract claim type summary lines (2 letter code followed by numbers)
-grep -E '^[A-Z]{2}[[:space:]]+[0-9]' "$RAW_OUTPUT" | while read -r line; do
+grep -E '^[A-Z]{2}[[:space:]]+[0-9]' "$RAW_OUTPUT" 2>/dev/null | while read -r line; do
     TYPE=$(echo "$line" | awk '{print $1}')
     COUNT=$(echo "$line" | awk '{print $2}')
     TOTAL=$(echo "$line" | awk '{print $3}')
@@ -74,7 +57,7 @@ done
 
 # Extract grand totals - look for a line with just two numbers (count and sum)
 # This will be from the second SELECT
-GRAND_LINE=$(grep -E '^[[:space:]]*[0-9]+[[:space:]]+[0-9]' "$RAW_OUTPUT" | tail -1)
+GRAND_LINE=$(grep -E '^[[:space:]]*[0-9]+[[:space:]]+[0-9]' "$RAW_OUTPUT" 2>/dev/null | tail -1)
 GRAND_COUNT=$(echo "$GRAND_LINE" | awk '{print $1}')
 GRAND_TOTAL=$(echo "$GRAND_LINE" | awk '{print $2}')
 
@@ -86,9 +69,6 @@ GRAND TOTAL:                  ${GRAND_COUNT:-0}              \$${GRAND_TOTAL:-0.
 
 REPORT GENERATED SUCCESSFULLY
 EOF
-
-# Cleanup
-rm -f "$SQL_FILE" "$RAW_OUTPUT"
 
 echo "================================================"
 echo "Report Generation Complete"
