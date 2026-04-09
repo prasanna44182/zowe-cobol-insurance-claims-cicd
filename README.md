@@ -1,6 +1,6 @@
 # Insurance Claims Batch System - CI/CD on IBM Z
 
-**A hands-on project for mainframe developers who want to learn modern DevOps with free, open-source tools.**
+**Enterprise-grade batch processing architecture demonstrating mainframe DevOps modernization using open-source tooling.**
 
 There's this myth floating around that you can't learn mainframe without access to expensive enterprise systems. That's not true anymore. IBM provides free z/OS access through Z Xplore, and the open-source Zowe project gives you modern CLI tools to work with it. I put this project together so fellow mainframers - whether you're just starting out or have been doing this for years - can see how COBOL, DB2, JCL, and REXX fit into a modern CI/CD workflow using tools that cost nothing.
 
