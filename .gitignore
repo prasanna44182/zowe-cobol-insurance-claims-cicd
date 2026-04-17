@@ -19,3 +19,8 @@ __pycache__/
 build/
 *.lst
 *.obj
+
+# Secrets and generated SQL (may contain DB2 connect password)
+.env
+insert_claims.sql
+report_query.sql

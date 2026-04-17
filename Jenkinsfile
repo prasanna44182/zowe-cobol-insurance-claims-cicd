@@ -139,37 +139,40 @@ pipeline {
             steps {
                 script {
                     echo "=== Loading claims via USS DB2 CLI ==="
-                    
-                    // Step 1: Download CLAIMS.VALID from mainframe
-                    sh """
-                        zowe zos-files download data-set "${HLQ}.CLAIMS.VALID" -f claims_valid.txt
-                        echo "Downloaded ${HLQ}.CLAIMS.VALID"
-                        wc -l claims_valid.txt || true
-                        head -3 claims_valid.txt || true
-                    """
-                    
-                    // Step 2: Generate INSERT SQL using our script
-                    sh """
-                        chmod +x src/scripts/load_claims.sh
-                        ./src/scripts/load_claims.sh claims_valid.txt insert_claims.sql
-                        echo "Generated SQL preview:"
-                        head -10 insert_claims.sql
-                    """
-                    
-                    // Step 3: Upload SQL file to USS
-                    sh """
-                        zowe zos-files upload file-to-uss insert_claims.sql "/z/${HLQ.toLowerCase()}/insert_claims.sql"
-                        echo "Uploaded SQL to USS: /z/${HLQ.toLowerCase()}/insert_claims.sql"
-                    """
-                    
-                    // Step 4: Execute SQL via USS db2 command (Z Xplore CLP)
-                    sh """
-                        echo "Executing SQL via USS DB2 CLI..."
-                        zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -f insert_claims.sql" || {
-                            echo "DB2 command completed (check output for any SQL errors)"
-                        }
-                    """
-                    
+                    // DB2 CLP password: Jenkins → Manage Credentials → Secret text, ID must be zxplore-db2-password
+                    withCredentials([string(credentialsId: 'zxplore-db2-password', variable: 'DB2_PASSWORD')]) {
+                        // Step 1: Download CLAIMS.VALID from mainframe
+                        sh """
+                            zowe zos-files download data-set "${HLQ}.CLAIMS.VALID" -f claims_valid.txt
+                            echo "Downloaded ${HLQ}.CLAIMS.VALID"
+                            wc -l claims_valid.txt || true
+                            head -3 claims_valid.txt || true
+                        """
+
+                        // Step 2: Generate INSERT SQL (preview skips connect lines so logs do not echo secrets)
+                        sh """
+                            chmod +x src/scripts/load_claims.sh
+                            export DB2_PASSWORD DB2_USER='z77140' DB2_SCHEMA='${HLQ}' DB2_CONNECT_TARGET='204.90.115.200:5040/ZXPDB2'
+                            ./src/scripts/load_claims.sh claims_valid.txt insert_claims.sql
+                            echo "Generated SQL preview (INSERT lines only):"
+                            grep -E '^INSERT ' insert_claims.sql | head -5 || true
+                        """
+
+                        // Step 3: Upload SQL file to USS
+                        sh """
+                            zowe zos-files upload file-to-uss insert_claims.sql "/z/${HLQ.toLowerCase()}/insert_claims.sql"
+                            echo "Uploaded SQL to USS: /z/${HLQ.toLowerCase()}/insert_claims.sql"
+                        """
+
+                        // Step 4: Execute SQL via USS db2 command (Z Xplore CLP)
+                        sh """
+                            echo "Executing SQL via USS DB2 CLI..."
+                            zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -f insert_claims.sql" || {
+                                echo "DB2 command completed (check output for any SQL errors)"
+                            }
+                        """
+                    }
+
                     echo "=== USS DB2 Load Complete ==="
                 }
             }
@@ -179,42 +182,44 @@ pipeline {
             steps {
                 script {
                     echo "=== Generating Claims Report via USS DB2 CLI ==="
-                    
-                    // Step 1: Create SQL query file locally (Z Xplore CLP format - no semicolons)
-                    writeFile file: 'report_query.sql', text: '''connect to 204.90.115.200:5040/ZXPDB2 user z77140 using PIK13IHC
-SET CURRENT SCHEMA = 'Z77140'
+                    withCredentials([string(credentialsId: 'zxplore-db2-password', variable: 'DB2_PASSWORD')]) {
+                        // Step 1: Create SQL query file locally (Z Xplore CLP format - no semicolons)
+                        def reportSql = """connect to 204.90.115.200:5040/ZXPDB2 user z77140 using ${env.DB2_PASSWORD}
+SET CURRENT SCHEMA = '${HLQ}'
 SELECT CLAIM_TYPE, COUNT(*) AS CNT, SUM(CLAIM_AMOUNT) AS TOTAL_AMT, AVG(CLAIM_AMOUNT) AS AVG_AMT, MAX(CLAIM_AMOUNT) AS MAX_AMT FROM CLAIMS_MASTER GROUP BY CLAIM_TYPE ORDER BY CLAIM_TYPE
 SELECT COUNT(*) AS TOTAL_CNT, SUM(CLAIM_AMOUNT) AS GRAND_TOTAL FROM CLAIMS_MASTER
 DISCONNECT
-'''
-                    
-                    // Step 2: Upload SQL file to USS
-                    sh """
-                        zowe zos-files upload file-to-uss report_query.sql "/z/${HLQ.toLowerCase()}/report_query.sql"
-                        echo "Uploaded report query to USS"
-                    """
-                    
-                    // Step 3: Execute SQL via USS db2 command and capture output
-                    sh """
-                        echo "Executing report query via USS DB2 CLI..."
-                        zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -f report_query.sql" > db2_report_output.txt 2>&1 || true
-                        echo "=== RAW DB2 OUTPUT ==="
-                        cat db2_report_output.txt
-                        echo "=== END RAW OUTPUT ==="
-                    """
-                    
-                    // Step 4: Parse raw output and generate formatted report locally
-                    sh """
-                        chmod +x src/scripts/generate_report.sh
-                        ./src/scripts/generate_report.sh db2_report_output.txt claims_report.txt
-                    """
-                    
-                    // Display report
-                    sh """
-                        echo "=== CLAIMS SUMMARY REPORT ==="
-                        cat claims_report.txt
-                    """
-                    
+"""
+                        writeFile file: 'report_query.sql', text: reportSql
+
+                        // Step 2: Upload SQL file to USS
+                        sh """
+                            zowe zos-files upload file-to-uss report_query.sql "/z/${HLQ.toLowerCase()}/report_query.sql"
+                            echo "Uploaded report query to USS"
+                        """
+
+                        // Step 3: Execute SQL via USS db2 command and capture output
+                        sh """
+                            echo "Executing report query via USS DB2 CLI..."
+                            zowe zos-uss issue ssh "cd /z/${HLQ.toLowerCase()} && db2 -f report_query.sql" > db2_report_output.txt 2>&1 || true
+                            echo "=== RAW DB2 OUTPUT ==="
+                            cat db2_report_output.txt
+                            echo "=== END RAW OUTPUT ==="
+                        """
+
+                        // Step 4: Parse raw output and generate formatted report locally
+                        sh """
+                            chmod +x src/scripts/generate_report.sh
+                            ./src/scripts/generate_report.sh db2_report_output.txt claims_report.txt
+                        """
+
+                        // Display report
+                        sh """
+                            echo "=== CLAIMS SUMMARY REPORT ==="
+                            cat claims_report.txt
+                        """
+                    }
+
                     echo "=== USS DB2 Report Complete ==="
                 }
             }

@@ -110,4 +110,5 @@ All programs follow z/OS return code conventions:
   6. Verify Bind — CC 0000 or CC 0004
 - **Jenkins URL:** `http://localhost:8080`
 - **Job:** `insurance-claims-pipeline`
-- **Credentials:** z/OS username/password stored in Jenkins credential store (ID: `zos-credentials`)
+- **Credentials:** z/OS username/password stored in Jenkins credential store (ID: `zos-credentials`) for Zowe CLI / z/OSMF
+- **DB2 CLP (USS stages):** Secret text in Jenkins with ID **`zxplore-db2-password`** — used only at runtime for `connect ... using ...` in generated SQL (never committed to Git)

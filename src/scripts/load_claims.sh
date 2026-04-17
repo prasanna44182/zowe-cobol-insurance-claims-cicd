@@ -30,11 +30,24 @@ echo "Output SQL file: $OUTPUT_FILE"
 # 71     STATUS         X(01)
 # 72-100 FILLER         X(29)
 
-# Start SQL file with connection (Z Xplore CLP format - no semicolons)
-cat > "$OUTPUT_FILE" << 'EOF'
-connect to 204.90.115.200:5040/ZXPDB2 user z77140 using PIK13IHC
-SET CURRENT SCHEMA = 'Z77140'
-EOF
+# Start SQL file with connection (Z Xplore CLP format - no semicolons).
+# Secrets must come from the environment — never commit passwords to Git.
+#   DB2_PASSWORD     (required) — Z Xplore DB2 password for CLP connect
+#   DB2_CONNECT_TARGET (optional) — default Z Xplore JDBC-style target below
+#   DB2_USER         (optional) — default z77140
+#   DB2_SCHEMA       (optional) — default Z77140
+DB2_CONNECT_TARGET="${DB2_CONNECT_TARGET:-204.90.115.200:5040/ZXPDB2}"
+DB2_USER="${DB2_USER:-z77140}"
+DB2_SCHEMA="${DB2_SCHEMA:-Z77140}"
+if [ -z "${DB2_PASSWORD}" ]; then
+    echo "ERROR: DB2_PASSWORD is not set. Export it before running (Jenkins: Secret text credential zxplore-db2-password)."
+    exit 1
+fi
+
+{
+    printf 'connect to %s user %s using %s\n' "$DB2_CONNECT_TARGET" "$DB2_USER" "$DB2_PASSWORD"
+    printf "SET CURRENT SCHEMA = '%s'\n" "$DB2_SCHEMA"
+} > "$OUTPUT_FILE"
 
 COUNT=0
 GENERATED=0
