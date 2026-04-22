@@ -20,6 +20,21 @@ pipeline {
             }
         }
 
+        // Shift-left: GnuCOBOL parses IBM-strict COBOL before z/OS upload (Simon Sobisch idea).
+        // Requires: brew install gnucobol on the Jenkins agent (Mac: cobc on PATH).
+        // CLMSDB2 / CLMSRPT use EXEC SQL — IBM compile only; not checked here.
+        stage('GnuCOBOL syntax (CLMSVALD)') {
+            steps {
+                sh '''
+                    set -e
+                    command -v cobc
+                    cobc --version
+                    cobc -std=ibm-strict -fsyntax-only -I src/copybook src/cobol/CLMSVALD.cbl
+                    echo "GnuCOBOL: CLMSVALD.cbl syntax OK (ibm-strict)"
+                '''
+            }
+        }
+
         stage('Upload COBOL') {
             steps {
                 sh "zowe zos-files upload dir-to-pds src/cobol ${HLQ}.CBL"
