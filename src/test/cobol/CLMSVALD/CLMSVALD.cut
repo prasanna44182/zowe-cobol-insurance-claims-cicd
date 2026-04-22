@@ -1,0 +1,61 @@
+           TESTSUITE "CLMSVALD — 3000-VALIDATE business rules"
+
+           TESTCASE "Valid medical claim with policy, id, date, type, and amount passes"
+              SET INVALID-CLAIM TO TRUE
+              MOVE "POL1234567" TO CLM-POLICY-NUMBER
+              MOVE "CLM00001" TO CLM-CLAIM-ID
+              MOVE 20260315 TO CLM-CLAIM-DATE
+              MOVE "MD" TO CLM-CLAIM-TYPE
+              MOVE 1500.50 TO CLM-CLAIM-AMOUNT
+              MOVE "HMO" TO CLM-COVERAGE-CODE
+              MOVE "N" TO CLM-STATUS
+              PERFORM 3000-VALIDATE
+              EXPECT VALID-CLAIM TO BE TRUE
+
+           TESTCASE "Blank policy number does not validate"
+              SET INVALID-CLAIM TO TRUE
+              MOVE SPACES TO CLM-POLICY-NUMBER
+              MOVE "CLM00001" TO CLM-CLAIM-ID
+              MOVE 20260315 TO CLM-CLAIM-DATE
+              MOVE "MD" TO CLM-CLAIM-TYPE
+              MOVE 100.00 TO CLM-CLAIM-AMOUNT
+              MOVE "HMO" TO CLM-COVERAGE-CODE
+              MOVE "N" TO CLM-STATUS
+              PERFORM 3000-VALIDATE
+              EXPECT INVALID-CLAIM TO BE TRUE
+
+           TESTCASE "Blank claim id does not validate"
+              SET INVALID-CLAIM TO TRUE
+              MOVE "POL1234567" TO CLM-POLICY-NUMBER
+              MOVE SPACES TO CLM-CLAIM-ID
+              MOVE 20260315 TO CLM-CLAIM-DATE
+              MOVE "MD" TO CLM-CLAIM-TYPE
+              MOVE 100.00 TO CLM-CLAIM-AMOUNT
+              MOVE "HMO" TO CLM-COVERAGE-CODE
+              MOVE "N" TO CLM-STATUS
+              PERFORM 3000-VALIDATE
+              EXPECT INVALID-CLAIM TO BE TRUE
+
+           TESTCASE "Invalid claim type does not validate"
+              SET INVALID-CLAIM TO TRUE
+              MOVE "POL1234567" TO CLM-POLICY-NUMBER
+              MOVE "CLM00001" TO CLM-CLAIM-ID
+              MOVE 20260315 TO CLM-CLAIM-DATE
+              MOVE "XX" TO CLM-CLAIM-TYPE
+              MOVE 100.00 TO CLM-CLAIM-AMOUNT
+              MOVE "HMO" TO CLM-COVERAGE-CODE
+              MOVE "N" TO CLM-STATUS
+              PERFORM 3000-VALIDATE
+              EXPECT INVALID-CLAIM TO BE TRUE
+
+           TESTCASE "Zero claim amount does not validate"
+              SET INVALID-CLAIM TO TRUE
+              MOVE "POL1234567" TO CLM-POLICY-NUMBER
+              MOVE "CLM00001" TO CLM-CLAIM-ID
+              MOVE 20260315 TO CLM-CLAIM-DATE
+              MOVE "MD" TO CLM-CLAIM-TYPE
+              MOVE ZERO TO CLM-CLAIM-AMOUNT
+              MOVE "HMO" TO CLM-COVERAGE-CODE
+              MOVE "N" TO CLM-STATUS
+              PERFORM 3000-VALIDATE
+              EXPECT INVALID-CLAIM TO BE TRUE

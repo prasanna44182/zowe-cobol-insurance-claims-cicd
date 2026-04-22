@@ -1,0 +1,4 @@
+#!/bin/sh
+# From Open Mainframe Project cobol-check — compile and run generated test program with GnuCOBOL.
+cd "$(dirname "$1")"
+cobc -xj "$@"

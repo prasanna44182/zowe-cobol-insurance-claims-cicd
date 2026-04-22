@@ -83,7 +83,7 @@ Here's what happens when you trigger a Jenkins build:
 | # | Stage | Command | Description |
 |---|-------|---------|-------------|
 | 11 | **Run Validation** | `zowe jobs submit data-set "Z77140.JCL(CLMSVLD)"` | Executes CLMSVALD COBOL program. Reads 90 records from VSAM KSDS, applies business rules (policy number format, claim amount range, date validation), writes 88 valid records to CLAIMS.VALID and 2 rejected to CLAIMS.REJECT. Displays spool output showing INPUT/VALID/REJECT counts. |
-| 12 | **USS DB2 Load** | Shell script + `db2 -f` | Multi-step process: (1) Downloads CLAIMS.VALID from z/OS to Jenkins workspace, (2) Runs load_claims.sh to parse fixed-width records and generate INSERT SQL, (3) Uploads SQL to USS, (4) Executes via `db2 -f` command in USS. Inserts 88 records into CLAIMS_MASTER table. |
+| 12 | **USS DB2 Load** | Shell script + `db2 -f` | Multi-step process: (1) Downloads CLAIMS.VALID from z/OS to Jenkins workspace, (2) Runs load_claims.sh to parse fixed-width records and generate INSERT SQL, (3) Uploads SQL to USS, (4) Executes via `db2 -f` command in USS. Generated SQL runs `DELETE FROM CLAIMS_MASTER` after `SET CURRENT SCHEMA` so repeat builds stay idempotent (avoids SQLCODE -803 duplicate key). Set `DB2_LOAD_SKIP_DELETE=1` to omit the delete if you need append-only behavior. Inserts 88 records. |
 | 13 | **USS DB2 Report** | Shell script + `db2 -f` | Multi-step process: (1) Creates SQL query file with GROUP BY CLAIM_TYPE aggregation, (2) Uploads to USS, (3) Executes via `db2 -f` and captures raw output, (4) Runs generate_report.sh locally to parse DB2 output and format the summary report showing counts and totals by claim type. |
 | 14 | **Run Post-Load Jobs** | `zowe jobs submit data-set "Z77140.JCL(CLMSPOST)"` | Submits JCL with two steps: STEP010 runs CLMSRPT (COBOL report - reference implementation), STEP020 runs CLMSALRT (REXX alert program via IKJEFT01). CLMSALRT uses DSNREXX to query claims > $50K and produces the high-value claims alert report. Returns CC 0004 when alerts are found. |
 
@@ -253,7 +253,8 @@ zowe jobs submit data-set "Z77140.JCL(CLMSPOST)" --wait-for-output
 │   ├── db2/             CLMSDDL.sql
 │   ├── scripts/         load_claims.sh, generate_report.sh
 │   └── data/            Sample claims data, VSAM setup JCL
-├── docs/                Architecture notes
+├── cobol-check/         COBOL Check config, run script (testruns/ is generated, gitignored)
+├── tools/               cobol-check-0.2.19.jar (Open Mainframe Project CLI)
 ├── Jenkinsfile          The CI/CD pipeline
 └── README.md
 ```

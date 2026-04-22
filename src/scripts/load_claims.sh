@@ -36,6 +36,7 @@ echo "Output SQL file: $OUTPUT_FILE"
 #   DB2_CONNECT_TARGET (optional) — default Z Xplore JDBC-style target below
 #   DB2_USER         (optional) — default z77140
 #   DB2_SCHEMA       (optional) — default Z77140
+#   DB2_LOAD_SKIP_DELETE (optional) — set to 1 to omit DELETE (default: clear table before INSERT)
 DB2_CONNECT_TARGET="${DB2_CONNECT_TARGET:-204.90.115.200:5040/ZXPDB2}"
 DB2_USER="${DB2_USER:-z77140}"
 DB2_SCHEMA="${DB2_SCHEMA:-Z77140}"
@@ -44,10 +45,15 @@ if [ -z "${DB2_PASSWORD}" ]; then
     exit 1
 fi
 
+# Lab / repeatable CI: DELETE clears CLAIMS_MASTER so re-runs do not hit SQLCODE -803 (duplicate key).
+# Unqualified name resolves via SET CURRENT SCHEMA (e.g. Z77140.CLAIMS_MASTER).
 {
     printf 'connect to %s user %s using %s\n' "$DB2_CONNECT_TARGET" "$DB2_USER" "$DB2_PASSWORD"
     printf "SET CURRENT SCHEMA = '%s'\n" "$DB2_SCHEMA"
 } > "$OUTPUT_FILE"
+if [ "${DB2_LOAD_SKIP_DELETE:-0}" != "1" ]; then
+    echo 'DELETE FROM CLAIMS_MASTER' >> "$OUTPUT_FILE"
+fi
 
 COUNT=0
 GENERATED=0

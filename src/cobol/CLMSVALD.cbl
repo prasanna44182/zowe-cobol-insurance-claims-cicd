@@ -154,12 +154,15 @@
                EXIT PARAGRAPH
            END-IF.
            IF NOT CLM-TYPE-VALID
+               SET INVALID-CLAIM TO TRUE
                EXIT PARAGRAPH
            END-IF.
            IF CLM-CLAIM-AMOUNT NOT > ZEROS
+               SET INVALID-CLAIM TO TRUE
                EXIT PARAGRAPH
            END-IF.
            IF CLM-CLAIM-AMOUNT >= 9999999.99
+               SET INVALID-CLAIM TO TRUE
                EXIT PARAGRAPH
            END-IF.
            SET VALID-CLAIM TO TRUE.

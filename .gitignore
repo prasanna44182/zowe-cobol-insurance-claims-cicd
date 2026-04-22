@@ -24,3 +24,6 @@ build/
 .env
 insert_claims.sql
 report_query.sql
+
+# COBOL Check generated merge output and run artifacts
+cobol-check/testruns/

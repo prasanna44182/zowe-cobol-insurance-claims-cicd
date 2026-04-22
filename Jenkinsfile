@@ -35,6 +35,28 @@ pipeline {
             }
         }
 
+        // Open Mainframe Project COBOL Check — unit tests for CLMSVALD (3000-VALIDATE).
+        // Requires: Java on PATH, GnuCOBOL (cobc), tools/cobol-check-0.2.19.jar, cobol-check/config.properties.
+        // Note: cobol-check JVM may exit 0 even when tests fail; we grep testResults.txt for FAIL lines.
+        stage('COBOL Check (CLMSVALD)') {
+            steps {
+                sh '''
+                    set -e
+                    command -v java
+                    command -v cobc
+                    chmod +x cobol-check/scripts/linux_gnucobol_run_tests
+                    test -f tools/cobol-check-0.2.19.jar
+                    java -jar tools/cobol-check-0.2.19.jar -p CLMSVALD -c cobol-check/config.properties
+                    if grep -qF "**** FAIL:" cobol-check/testruns/testResults.txt 2>/dev/null; then
+                        echo "COBOL Check: one or more tests failed (see cobol-check/testruns/testResults.txt)"
+                        cat cobol-check/testruns/testResults.txt
+                        exit 1
+                    fi
+                    echo "COBOL Check: CLMSVALD tests passed"
+                '''
+            }
+        }
+
         stage('Upload COBOL') {
             steps {
                 sh "zowe zos-files upload dir-to-pds src/cobol ${HLQ}.CBL"
