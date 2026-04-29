@@ -62,25 +62,42 @@ set -euo pipefail
 source "${HOME}/sqllib/db2profile"
 export DB2INCLUDE="${SQLCA_PATH}"
 export COBCPY="${WORKDIR}/cpy"
-db2 connect to "${DATABASE}" user db2inst1 using "${DB2PASSWORD}"
+# Instance may be down after host restart or idle; connect requires a running database manager.
+db2start >/dev/null 2>&1 || true
+if ! db2 connect to "${DATABASE}" user db2inst1 using "${DB2PASSWORD}"; then
+  echo "ERROR: db2 connect failed. Check database name, password, and that the container completed first-time setup (docker logs db2server)."
+  exit 1
+fi
 db2 +c "CREATE SCHEMA Z77140" || true
+set +e
 db2 -tvf CLMSDDL_LUW.sql
+ddl_rc=$?
+set -e
+if [[ $ddl_rc -ne 0 && $ddl_rc -ne 4 ]]; then
+  echo "ERROR: CLMSDDL_LUW.sql failed (exit $ddl_rc)"
+  exit "$ddl_rc"
+fi
 
 prep_one() {
-  local src="$1"
-  local pkg
+  local src="$1" pkg rc
   pkg=$(basename "$src" .cbl | tr "[:lower:]" "[:upper:]")
   echo "=== db2 prep ${src} (PACKAGE ${pkg}) ==="
+  set +e
   db2 prep "${src}" BINDFILE PACKAGE USING "${pkg}" ISOLATION CS \
     QUALIFIER Z77140 OWNER DB2INST1 \
     TARGET IBMCOB \
     INCLUDEPATH "${SQLCA_PATH}:${WORKDIR}/cpy"
+  rc=$?
+  set -e
+  if [[ $rc -ne 0 && $rc -ne 4 ]]; then
+    exit "$rc"
+  fi
 }
 
 prep_one CLMSDB2.cbl
 prep_one CLMSRPT.cbl
 
-db2 terminate
+db2 terminate || true
 '
 
 echo "Db2 LUW prep: CLMSDB2.cbl and CLMSRPT.cbl OK"
