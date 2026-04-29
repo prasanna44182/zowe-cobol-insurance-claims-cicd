@@ -47,7 +47,7 @@ docker cp "$REPO_ROOT/src/cobol/CLMSDB2.cbl" "$CONTAINER:$WORKDIR/"
 docker cp "$REPO_ROOT/src/cobol/CLMSRPT.cbl" "$CONTAINER:$WORKDIR/"
 docker cp "$REPO_ROOT/src/copybook/CLAIMREC.cpy" "$CONTAINER:$WORKDIR/cpy/"
 docker cp "$REPO_ROOT/src/copybook/DCLCLMS.cpy" "$CONTAINER:$WORKDIR/cpy/"
-docker cp "$REPO_ROOT/src/db2/CLMSDDL_LUW.sql" "$CONTAINER:$WORKDIR/CLMSDDL_LUW.sql"
+docker cp "$REPO_ROOT/scripts/ddl/CLMSDDL_LUW.sql" "$CONTAINER:$WORKDIR/CLMSDDL_LUW.sql"
 
 docker exec \
   -u db2inst1 \
@@ -82,14 +82,15 @@ prep_one() {
   local src="$1" pkg rc
   pkg=$(basename "$src" .cbl | tr "[:lower:]" "[:upper:]")
   echo "=== db2 prep ${src} (PACKAGE ${pkg}) ==="
+  # COPY / INCLUDE resolution: COBCPY and DB2INCLUDE (not INCLUDEPATH — invalid on this Db2 prep syntax).
   set +e
   db2 prep "${src}" BINDFILE PACKAGE USING "${pkg}" ISOLATION CS \
     QUALIFIER Z77140 OWNER DB2INST1 \
-    TARGET IBMCOB \
-    INCLUDEPATH "${SQLCA_PATH}:${WORKDIR}/cpy"
+    TARGET IBMCOB
   rc=$?
   set -e
-  if [[ $rc -ne 0 && $rc -ne 4 ]]; then
+  if [[ $rc -ne 0 ]]; then
+    echo "ERROR: db2 prep failed for ${src} (exit $rc)"
     exit "$rc"
   fi
 }

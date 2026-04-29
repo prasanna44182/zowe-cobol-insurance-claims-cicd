@@ -1,5 +1,5 @@
--- Db2 LUW: CLAIMS_MASTER definition for local SQL precompile validation.
--- Production z/OS DDL remains in CLMSDDL.sql. Apply after CREATE SCHEMA Z77140 (see db2-luw-prep-check.sh).
+-- Db2 LUW: CLAIMS_MASTER for local SQL precompile (db2 prep). Not used on z/OS.
+-- z/OS DDL: src/db2/CLMSDDL.sql. Apply after CREATE SCHEMA Z77140 (see scripts/db2-luw-prep-check.sh).
 
 DROP TABLE IF EXISTS Z77140.CLAIMS_MASTER;
 
