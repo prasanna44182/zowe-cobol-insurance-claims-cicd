@@ -1,0 +1,15 @@
+Reference: Installing Db2 Community Edition for Docker on macOS systems
+https://www.ibm.com/docs/en/db2/12.1.x?topic=system-macos
+
+This repo includes:
+  Docker/env_list.ibm-macos — IBM step 5 variables (edit password before real use).
+  scripts/ibm-db2-docker-macos.sh — IBM steps 1, 3, 7 using $HOME/Docker (bind mount IS_OSXFS=true).
+
+Alternative — named Docker volume for /database (use if bind-mount setup fails during instance create):
+  Docker/env_list.ibm-macos.named-volume — IS_OSXFS=false for Linux filesystem on /database.
+  scripts/ibm-db2-docker-macos-named-volume.sh — volume db2_community_data (override DB2_DOCKER_VOLUME), seeds $HOME/Docker/.env_list_named_volume; Apple Silicon uses --platform linux/amd64.
+
+IBM step 8 (shell as db2inst1):
+  docker exec -ti db2server bash -c "su - db2inst1"
+
+After setup completes (docker logs -f db2server), test per IBM “Testing your Db2 Community Edition Docker image installation on macOS systems”.

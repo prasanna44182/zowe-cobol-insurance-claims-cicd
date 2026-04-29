@@ -24,6 +24,13 @@ build/
 .env
 insert_claims.sql
 report_query.sql
+claims_valid.txt
+db2_report_output.txt
+claims_report.txt
 
 # COBOL Check generated merge output and run artifacts
 cobol-check/testruns/
+
+# IBM Db2 Docker: if you copy .env_list into the repo instead of $HOME/Docker
+Docker/.env_list
+Docker/.env_list_named_volume

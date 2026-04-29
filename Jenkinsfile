@@ -5,6 +5,9 @@ pipeline {
         HLQ = 'Z77140'
         ZOWE_PROFILE = 'zosmf'
         PATH = "/usr/local/bin:/opt/homebrew/bin:${env.PATH}"
+        // DB2 CLP (IBM Z Xplore lab defaults — not secrets; override per fork/site). Password only via Jenkins credential zxplore-db2-password.
+        DB2_CONNECT_TARGET = '204.90.115.200:5040/ZXPDB2'
+        DB2_CLP_USER = 'z77140'
     }
 
     options {
@@ -20,9 +23,7 @@ pipeline {
             }
         }
 
-        // Shift-left: GnuCOBOL parses IBM-strict COBOL before z/OS upload (Simon Sobisch idea).
-        // Requires: brew install gnucobol on the Jenkins agent (Mac: cobc on PATH).
-        // CLMSDB2 / CLMSRPT use EXEC SQL — IBM compile only; not checked here.
+        // IBM-strict syntax-only pass for CLMSVALD.cbl (GnuCOBOL cobc). Prerequisites: cobc on PATH.
         stage('GnuCOBOL syntax (CLMSVALD)') {
             steps {
                 sh '''
@@ -35,9 +36,8 @@ pipeline {
             }
         }
 
-        // Open Mainframe Project COBOL Check — unit tests for CLMSVALD (3000-VALIDATE).
-        // Requires: Java on PATH, GnuCOBOL (cobc), tools/cobol-check-0.2.19.jar, cobol-check/config.properties.
-        // Note: cobol-check JVM may exit 0 even when tests fail; we grep testResults.txt for FAIL lines.
+        // COBOL Check (Open Mainframe Project): CLMSVALD tests. Prerequisites: java, cobc, tools/cobol-check-0.2.19.jar.
+        // Exit status may be 0 on failure; the shell step greps cobol-check/testruns/testResults.txt for "**** FAIL:".
         stage('COBOL Check (CLMSVALD)') {
             steps {
                 sh '''
@@ -53,6 +53,17 @@ pipeline {
                         exit 1
                     fi
                     echo "COBOL Check: CLMSVALD tests passed"
+                '''
+            }
+        }
+
+        // Db2 LUW embedded-SQL precompile for CLMSDB2.cbl and CLMSRPT.cbl (scripts/db2-luw-prep-check.sh).
+        // Prerequisites: Docker, container db2server, DB2_LUW_PASSWORD or DB2INST1_PASSWORD. Optional: DB2_LUW_PREP_SKIP=1.
+        stage('Db2 LUW prep (CLMSDB2 CLMSRPT)') {
+            steps {
+                sh '''
+                    chmod +x scripts/db2-luw-prep-check.sh
+                    ./scripts/db2-luw-prep-check.sh
                 '''
             }
         }
@@ -189,7 +200,7 @@ pipeline {
                         // Step 2: Generate INSERT SQL (preview skips connect lines so logs do not echo secrets)
                         sh """
                             chmod +x src/scripts/load_claims.sh
-                            export DB2_PASSWORD DB2_USER='z77140' DB2_SCHEMA='${HLQ}' DB2_CONNECT_TARGET='204.90.115.200:5040/ZXPDB2'
+                            export DB2_PASSWORD DB2_USER="${env.DB2_CLP_USER}" DB2_SCHEMA='${HLQ}' DB2_CONNECT_TARGET="${env.DB2_CONNECT_TARGET}"
                             ./src/scripts/load_claims.sh claims_valid.txt insert_claims.sql
                             echo "Generated SQL preview (INSERT lines only):"
                             grep -E '^INSERT ' insert_claims.sql | head -5 || true
@@ -221,7 +232,7 @@ pipeline {
                     echo "=== Generating Claims Report via USS DB2 CLI ==="
                     withCredentials([string(credentialsId: 'zxplore-db2-password', variable: 'DB2_PASSWORD')]) {
                         // Step 1: Create SQL query file locally (Z Xplore CLP format - no semicolons)
-                        def reportSql = """connect to 204.90.115.200:5040/ZXPDB2 user z77140 using ${env.DB2_PASSWORD}
+                        def reportSql = """connect to ${env.DB2_CONNECT_TARGET} user ${env.DB2_CLP_USER} using ${env.DB2_PASSWORD}
 SET CURRENT SCHEMA = '${HLQ}'
 SELECT CLAIM_TYPE, COUNT(*) AS CNT, SUM(CLAIM_AMOUNT) AS TOTAL_AMT, AVG(CLAIM_AMOUNT) AS AVG_AMT, MAX(CLAIM_AMOUNT) AS MAX_AMT FROM CLAIMS_MASTER GROUP BY CLAIM_TYPE ORDER BY CLAIM_TYPE
 SELECT COUNT(*) AS TOTAL_CNT, SUM(CLAIM_AMOUNT) AS GRAND_TOTAL FROM CLAIMS_MASTER
