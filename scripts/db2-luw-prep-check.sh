@@ -41,13 +41,16 @@ if ! docker ps --format '{{.Names}}' | grep -qx "$CONTAINER"; then
   exit 1
 fi
 
-docker exec "$CONTAINER" mkdir -p "$WORKDIR/cpy"
+docker exec -u db2inst1 "$CONTAINER" mkdir -p "$WORKDIR/cpy"
 
 docker cp "$REPO_ROOT/src/cobol/CLMSDB2.cbl" "$CONTAINER:$WORKDIR/"
 docker cp "$REPO_ROOT/src/cobol/CLMSRPT.cbl" "$CONTAINER:$WORKDIR/"
 docker cp "$REPO_ROOT/src/copybook/CLAIMREC.cpy" "$CONTAINER:$WORKDIR/cpy/"
 docker cp "$REPO_ROOT/src/copybook/DCLCLMS.cpy" "$CONTAINER:$WORKDIR/cpy/"
 docker cp "$REPO_ROOT/scripts/ddl/CLMSDDL_LUW.sql" "$CONTAINER:$WORKDIR/CLMSDDL_LUW.sql"
+
+# docker cp sets root ownership; db2 prep must write .bnd next to sources.
+docker exec "$CONTAINER" chown -R db2inst1 "$WORKDIR"
 
 docker exec \
   -u db2inst1 \
@@ -68,7 +71,6 @@ if ! db2 connect to "${DATABASE}" user db2inst1 using "${DB2PASSWORD}"; then
   echo "ERROR: db2 connect failed. Check database name, password, and that the container completed first-time setup (docker logs db2server)."
   exit 1
 fi
-db2 +c "CREATE SCHEMA Z77140" || true
 set +e
 db2 -tvf CLMSDDL_LUW.sql
 ddl_rc=$?
