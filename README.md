@@ -421,7 +421,6 @@ Key insight: DSNREXX uses dynamic SQL under the covers, so no plan authorization
 
 If you're learning mainframe or want to improve the pipeline, contributions are welcome. Open an issue or PR.
 
----
 
 ## License
 
